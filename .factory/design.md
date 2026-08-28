@@ -15,7 +15,7 @@ This is deliberately a single-mode, warm-paper interface. The explicit canvas av
 | Ink | `#18332F` | primary copy, borders, PDF text |
 | Muted ink | `#52645F` | supporting copy; 5.5:1+ on paper |
 | Forest | `#24594F` | primary controls, active route |
-| Signal coral | `#D9573F` | route pins, focus and decisive accents |
+| Signal coral | `#B5412F` | route pins, focus and decisive accents; darkened for AA text contrast |
 | Moss | `#A6B89B` | contour lines, low-emphasis dividers |
 | Success | `#2F6B4F` | completed package |
 | Warning | `#8A5A12` | offline/license notices |

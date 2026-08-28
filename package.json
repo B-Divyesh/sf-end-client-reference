@@ -1,0 +1,37 @@
+{
+  "name": "performed-for",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first invoice relationship cover-sheet generator",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/copy-routes.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run && playwright test",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/B-Divyesh/sf-end-client-reference.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/B-Divyesh/sf-end-client-reference/issues"
+  },
+  "homepage": "https://github.com/B-Divyesh/sf-end-client-reference#readme",
+  "dependencies": {
+    "pdf-lib": "1.17.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.58.2",
+    "@types/node": "22.13.0",
+    "typescript": "5.9.2",
+    "vite": "8.2.2",
+    "vitest": "4.1.11"
+  }
+}

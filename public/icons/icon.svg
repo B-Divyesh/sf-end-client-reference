@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Performed For map route</title>
+  <rect width="512" height="512" rx="80" fill="#f4f0e6"/>
+  <path d="M-20 168C74 78 123 83 199 145s125 71 202 2 138-54 165-21M-17 234c88-82 145-77 213-22s121 62 193 8 128-66 175-46M-24 300c98-71 157-61 221-15s113 52 182 19 122-65 187-51M-18 369c86-56 143-50 218-10s121 42 180 20 120-65 184-61" fill="none" stroke="#a6b89b" stroke-width="13"/>
+  <path d="M150 172c52 8 66 71 108 87s65 33 97 82" fill="none" stroke="#d9573f" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="146" cy="169" r="30" fill="#18332f" stroke="#f4f0e6" stroke-width="12"/>
+  <circle cx="360" cy="346" r="30" fill="#18332f" stroke="#f4f0e6" stroke-width="12"/>
+</svg>
