@@ -1,0 +1,9 @@
+{
+  "useCase": "stylized-concept",
+  "assetType": "compact PWA header illustration",
+  "prompt": "Top-down editorial still life resembling a hand-cut topographic survey map made from layered warm ivory paper. Two distinct abstract landforms separated by a narrow channel, joined by one precise restrained coral route line and small registration dots. Subtle deep forest-green contour lines, quiet archival cartography mood, tactile paper fibers, soft directional daylight, generous clear edges. Palette: warm paper, deep evergreen ink, sage contour lines, signal coral. No people, no buildings, no screens, no text, no numerals, no logos, no watermark, no gradients, no blue, no currency symbols, no corporate stock-art style.",
+  "tool": "/opt/fleet/lib/gen-image.sh",
+  "deployment": "factory-image",
+  "generatedAt": "2026-08-28",
+  "review": "Accepted: clean contours and route; no text, marks, people, brands, or misleading interface elements."
+}

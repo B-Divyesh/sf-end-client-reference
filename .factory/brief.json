@@ -1,0 +1,9 @@
+{
+  "slug": "end-client-reference",
+  "title": "Performed For",
+  "artifact_class": "pwa-offline",
+  "user": "Subcontractors, fractional specialists, and white-label agencies that bill a prime contractor but must identify the ultimate customer and engagement on each invoice.",
+  "smallest_useful_product": "A local invoice cover-sheet generator: choose billing client, end client, project/PO reference, and attach an existing invoice PDF to produce a clearly labeled companion page and CSV relationship report.",
+  "constraints": "Never imply the end client is liable for payment; avoid storing sensitive client details in a hosted service; preserve names/POs exactly as entered.",
+  "monetization": "one-time"
+}
