@@ -73,3 +73,13 @@ test('legal routes are direct-loadable and semantic', async ({ page }) => {
     expect(await page.locator('html').getAttribute('lang')).toBe('en');
   }
 });
+
+test('captures and verifies a returned one-time license', async ({ page }) => {
+  await page.route('https://pilot-api.sociobot.in/api/v1/products/end-client-reference/verify**', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null })
+  }));
+  await page.goto('/?license=test-license-token');
+  await expect(page).not.toHaveURL(/license=/);
+  await expect(page.locator('#license-badge')).toContainText('unlimited');
+  expect(await page.evaluate(() => localStorage.getItem('sb_license:end-client-reference'))).toBe('test-license-token');
+});

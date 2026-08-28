@@ -61,4 +61,4 @@ Prompt sheet:
 - Model/deployment: `factory-image` (Azure AI Foundry deployment).
 - Generation date: 2026-08-28.
 - License/provenance: original AI-generated artwork commissioned for this product; no real people, brands, or copyrighted characters.
-- Source PNG and prompt sidecar live in `assets/src/`; optimized WebP/AVIF derivatives ship from `public/art/`.
+- Source PNG and prompt sidecar live in `assets/src/`; optimized responsive WebP derivatives ship from `public/art/` (the host converter’s AVIF output was rejected during review as invalid).

@@ -19,7 +19,7 @@ const esc = (value: string): string => value.replace(/[&<>'"]/g, (character) => 
 
 function shell(content: string): string {
   return `<header class="site-header">
-    <a class="brand" href="/" aria-label="Performed For home">
+    <a class="brand" href="/">
       <img src="/icons/icon.svg" width="44" height="44" alt="" />
       <span><strong>Performed For</strong><small>Invoice route sheets</small></span>
     </a>
@@ -82,8 +82,8 @@ async function renderWorkspace(): Promise<void> {
   try { records = await listRecords(); }
   catch { storageError = 'Local storage is unavailable. You can still generate a package, but the relationship log will not be saved.'; }
   const initialLicense = initialLicenseState();
-  const suggestions = [...new Set(records.map((record) => record.billingClient))];
-  const endSuggestions = [...new Set(records.map((record) => record.endClient))];
+  const suggestions = initialLicense.unlocked ? [...new Set(records.map((record) => record.billingClient))] : [];
+  const endSuggestions = initialLicense.unlocked ? [...new Set(records.map((record) => record.endClient))] : [];
 
   app.innerHTML = shell(`<main id="main">
     <section class="hero" aria-labelledby="hero-title">
@@ -130,7 +130,14 @@ async function renderWorkspace(): Promise<void> {
   let selectedFile: File | null = null;
   let licenseState = initialLicense;
   updateLicenseUi(licenseState);
-  verifyLicense().then((state) => { licenseState = state; updateLicenseUi(state); });
+  const updateSuggestions = (): void => {
+    if (!licenseState.unlocked) return;
+    const billingList = document.querySelector('#billing-clients');
+    const endList = document.querySelector('#end-clients');
+    if (billingList) billingList.innerHTML = [...new Set(records.map((record) => record.billingClient))].map((value) => `<option value="${esc(value)}"></option>`).join('');
+    if (endList) endList.innerHTML = [...new Set(records.map((record) => record.endClient))].map((value) => `<option value="${esc(value)}"></option>`).join('');
+  };
+  verifyLicense().then((state) => { licenseState = state; updateLicenseUi(state); updateSuggestions(); });
 
   const offlineNotice = document.querySelector<HTMLElement>('#offline-notice');
   const updateConnection = () => { if (offlineNotice) offlineNotice.hidden = navigator.onLine; };
@@ -187,6 +194,7 @@ async function renderWorkspace(): Promise<void> {
   function refreshRecords(next: RelationshipRecord[]): void {
     const list = document.querySelector('#record-list');
     if (list) list.innerHTML = recordRows(next);
+    updateSuggestions();
     bindDelete();
   }
   function bindDelete(): void {
@@ -216,7 +224,7 @@ async function renderWorkspace(): Promise<void> {
   document.querySelector<HTMLFormElement>('#restore-form')?.addEventListener('submit', async (event) => {
     event.preventDefault(); const input = document.querySelector<HTMLInputElement>('#license-token'); if (!input?.value.trim()) return;
     saveLicense(input.value); licenseState = { unlocked: false, checking: true, notice: 'Checking license…' }; updateLicenseUi(licenseState);
-    licenseState = await verifyLicense(true); updateLicenseUi(licenseState); if (licenseState.unlocked) toast('Trail pass restored. Unlimited packages are active.');
+    licenseState = await verifyLicense(true); updateLicenseUi(licenseState); updateSuggestions(); if (licenseState.unlocked) toast('Trail pass restored. Unlimited packages are active.');
   });
 }
 
