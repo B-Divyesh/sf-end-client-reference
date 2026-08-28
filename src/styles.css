@@ -85,7 +85,7 @@ label small { min-height: 20px; color: var(--muted); font-size: 13px; font-weigh
 label.full { grid-column: 1 / -1; }
 input { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #71817c; border-radius: 3px; color: var(--ink); background: white; }
 input:hover { border-color: var(--forest); }
-input:invalid:not(:focus):not(:placeholder-shown) { border-color: var(--danger); }
+input:user-invalid { border-color: var(--danger); }
 .field-error { min-height: 24px; margin: 8px 0 0; color: var(--danger); font-weight: 700; }
 .package-action { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 28px; color: var(--sheet); background: var(--ink); }
 .package-action p { margin: 2px 0 0; color: #d3ddd8; }
