@@ -13,7 +13,9 @@ const SLUG = 'end-client-reference';
 const LICENSE_KEY = `sb_license:${SLUG}`;
 const VERDICT_KEY = `${LICENSE_KEY}:verdict`;
 const DAY = 86_400_000;
-export const BILLING_BASE = import.meta.env.VITE_BILLING_BASE || 'https://pilot-api.sociobot.in/api/v1';
+// Public builds must always use the production merchant endpoint. Staging can
+// still override this explicitly during a pre-release deployment.
+export const BILLING_BASE = import.meta.env.VITE_BILLING_BASE || 'https://api.sociobot.in/api/v1';
 export const LICENSE_PRICE = import.meta.env.VITE_LICENSE_PRICE || '$19';
 export const BUY_URL = `${BILLING_BASE}/products/${SLUG}/checkout`;
 

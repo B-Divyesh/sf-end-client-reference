@@ -1,0 +1,7 @@
+# Performed For demo sandbox
+
+Open `/demo` (or `/?demo=1`) to load a completed Northline Studio invoice route. It includes a realistic one-page sample invoice, its billing client, end client, project reference, and one sample relationship-log row. The source invoice is created in browser memory only.
+
+The persistent **Demo — sample data, nothing is saved** banner offers **Reset demo** and **Start for real**. Reset deletes and reseeds only the `demo:performed-for` IndexedDB database and `demo:pf_generation_count` localStorage key. The ordinary workspace uses the separate `performed-for` database and `pf_generation_count` key. Demo mode never reads or writes those real-data namespaces and does not run license verification.
+
+Use the sample to generate a combined PDF, inspect the relationship log, or export CSV. Start for real returns to `/` and leaves the demo namespace isolated from a visitor's own records.

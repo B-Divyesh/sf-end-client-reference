@@ -4,9 +4,20 @@ const DB_NAME = 'performed-for';
 const STORE = 'relationships';
 const VERSION = 1;
 
+let namespace = '';
+
+/** Keep the catalog demo completely apart from a visitor's real relationship log. */
+export function setStorageNamespace(nextNamespace: 'demo' | ''): void {
+  namespace = nextNamespace;
+}
+
+function databaseName(): string {
+  return namespace ? `${namespace}:${DB_NAME}` : DB_NAME;
+}
+
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, VERSION);
+    const request = indexedDB.open(databaseName(), VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE)) {
@@ -52,6 +63,17 @@ export async function importRecords(records: RelationshipRecord[]): Promise<void
     records.forEach((record) => store.put(record));
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error ?? new Error('Import could not be saved.'));
+  });
+  db.close();
+}
+
+export async function clearRecords(): Promise<void> {
+  const db = await openDatabase();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error('Demo data could not be reset.'));
   });
   db.close();
 }

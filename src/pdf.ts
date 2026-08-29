@@ -4,7 +4,7 @@ import type { PDFDocument as PDFDocumentType } from 'pdf-lib';
 const PAGE_W = 1240;
 const PAGE_H = 1754;
 
-function wrapText(context: CanvasRenderingContext2D, text: string, width: number): string[] {
+export function wrapText(context: CanvasRenderingContext2D, text: string, width: number): string[] {
   const segments = Array.from(text);
   const lines: string[] = [];
   let line = '';
@@ -21,8 +21,26 @@ function wrapText(context: CanvasRenderingContext2D, text: string, width: number
 
 function drawWrapped(context: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, lineHeight: number): number {
   const lines = wrapText(context, value, width);
-  lines.slice(0, 3).forEach((line, index) => context.fillText(line, x, y + index * lineHeight));
-  return y + Math.min(lines.length, 3) * lineHeight;
+  // Relationship values are contractual identifiers. Never cut them off: the
+  // caller selects a fitting type size before drawing, and every line is drawn.
+  lines.forEach((line, index) => context.fillText(line, x, y + index * lineHeight));
+  return y + lines.length * lineHeight;
+}
+
+function relationshipLayout(context: CanvasRenderingContext2D, values: string[]): { fontSize: number; lineHeight: number; lines: string[][] } {
+  // Keep the complete three required values above the fixed payment notice.
+  // Even the UI maximums (180/180/220) fit at the smallest selected size.
+  for (let fontSize = 48; fontSize >= 20; fontSize -= 2) {
+    context.font = `700 ${fontSize}px Arial, sans-serif`;
+    const lines = values.map((value) => wrapText(context, value, 1040));
+    const lineHeight = Math.ceil(fontSize * 1.2);
+    const requiredHeight = lines.reduce((total, entry) => total + 66 + entry.length * lineHeight + 70, 0);
+    if (requiredHeight <= 860) return { fontSize, lineHeight, lines };
+  }
+  // This fallback is defensive: it still draws all text rather than silently
+  // omitting an identifier if a browser reports unusual glyph widths.
+  context.font = '700 18px Arial, sans-serif';
+  return { fontSize: 18, lineHeight: 22, lines: values.map((value) => wrapText(context, value, 1040)) };
 }
 
 async function coverPng(details: PackageDetails): Promise<Uint8Array> {
@@ -56,27 +74,36 @@ async function coverPng(details: PackageDetails): Promise<Uint8Array> {
     ['SERVICES PERFORMED FOR · END CLIENT', details.endClient],
     ['PROJECT / PO REFERENCE', details.reference],
   ];
+  const layout = relationshipLayout(context, rows.map(([, value]) => value));
   let y = 320;
-  rows.forEach(([label, value], index) => {
+  rows.forEach(([label], index) => {
+    const valueLines = layout.lines[index] ?? [];
     context.fillStyle = index === 1 ? '#B5412F' : '#52645F';
     context.font = '700 22px Arial, sans-serif';
     context.fillText(label, 100, y);
     context.fillStyle = '#18332F';
-    context.font = '700 48px Arial, sans-serif';
-    y = drawWrapped(context, value, 100, y + 66, 1040, 58) + 70;
+    context.font = `700 ${layout.fontSize}px Arial, sans-serif`;
+    valueLines.forEach((line, lineIndex) => context.fillText(line, 100, y + 66 + lineIndex * layout.lineHeight));
+    y += 66 + valueLines.length * layout.lineHeight + 70;
     context.strokeStyle = '#A6B89B';
     context.lineWidth = 2;
     context.beginPath(); context.moveTo(100, y - 24); context.lineTo(1140, y - 24); context.stroke();
   });
 
+  // The three required relationship values above are deliberately allocated
+  // first. Optional invoice metadata remains useful context but never crowds
+  // out a billing client, end client, or PO/reference.
   context.fillStyle = '#52645F';
   context.font = '700 20px Arial, sans-serif';
   context.fillText('INVOICE NUMBER', 100, y + 18);
   context.fillText('SERVICE PERIOD', 650, y + 18);
   context.fillStyle = '#18332F';
-  context.font = '30px Arial, sans-serif';
-  context.fillText(details.invoiceNumber || 'Not provided', 100, y + 68);
-  context.fillText(details.servicePeriod || 'Not provided', 650, y + 68);
+  // Small, fixed metadata type guarantees that the two optional 100-character
+  // fields remain above the payment note even when required values use their
+  // full allowed length.
+  context.font = '16px Arial, sans-serif';
+  drawWrapped(context, details.invoiceNumber || 'Not provided', 100, y + 58, 470, 20);
+  drawWrapped(context, details.servicePeriod || 'Not provided', 650, y + 58, 470, 20);
 
   context.fillStyle = '#F4F0E6';
   context.fillRect(100, 1390, 1040, 190);
@@ -84,7 +111,7 @@ async function coverPng(details: PackageDetails): Promise<Uint8Array> {
   context.font = '700 22px Arial, sans-serif';
   context.fillText('PAYMENT RESPONSIBILITY', 140, 1440);
   context.font = '25px Arial, sans-serif';
-  const note = `This cover identifies the beneficiary of the services only. ${details.billingClient} remains the billing client; this document does not make ${details.endClient} liable for payment.`;
+  const note = 'This cover identifies the beneficiary of the services only. The billing client remains responsible for payment. This document does not make the end client liable for payment.';
   drawWrapped(context, note, 140, 1490, 950, 36);
   context.fillStyle = '#52645F';
   context.font = '20px Arial, sans-serif';

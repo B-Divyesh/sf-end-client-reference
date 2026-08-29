@@ -1,0 +1,65 @@
+[
+  {
+    "id": "demo-isolated",
+    "claim": "The sample keeps its data separate from your relationship log",
+    "where": "Demo banner",
+    "test": "npm test -- --grep @claim:demo-isolated",
+    "sandbox": "fresh browser context; /demo; inspect the completed sample route and reset it"
+  },
+  {
+    "id": "original-invoice-intact",
+    "claim": "Keeps the original invoice intact",
+    "where": "Landing facts, README",
+    "test": "npm test -- --grep @claim:original-invoice-intact",
+    "sandbox": "fresh browser context; /demo; generate and parse the downloaded PDF"
+  },
+  {
+    "id": "csv-export",
+    "claim": "Exports the relationship log as CSV",
+    "where": "Relationship log action, README",
+    "test": "npm test -- --grep @claim:csv-export",
+    "sandbox": "fresh browser context; /demo; download and inspect the sample CSV"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "Works offline after the first visit",
+    "where": "Landing facts, README",
+    "test": "npm test -- --grep @claim:offline-reload",
+    "sandbox": "fresh browser context; load app once, wait for service worker control, set offline, reload"
+  },
+  {
+    "id": "runs-on-device",
+    "claim": "Runs on your device",
+    "where": "Landing facts",
+    "test": "npm test -- --grep @claim:runs-on-device",
+    "sandbox": "fresh browser context; /demo; generate sample package; record every request origin"
+  },
+  {
+    "id": "no-analytics",
+    "claim": "No analytics",
+    "where": "Footer, README",
+    "test": "npm test -- --grep @claim:no-analytics",
+    "sandbox": "fresh browser context; /demo; generate sample package; assert every request is same-origin GET"
+  },
+  {
+    "id": "no-cloud-document-storage",
+    "claim": "No cloud document storage",
+    "where": "Footer, README",
+    "test": "npm test -- --grep @claim:no-cloud-document-storage",
+    "sandbox": "fresh browser context; /demo; generate sample package; assert every request is same-origin GET"
+  },
+  {
+    "id": "one-time-unlock",
+    "claim": "A $19 one-time purchase unlocks unlimited packages",
+    "where": "License panel, README",
+    "test": "npm test -- --grep @claim:one-time-unlock",
+    "sandbox": "fresh browser context; returned-license fixture; assert unlock state and public production checkout URL"
+  },
+  {
+    "id": "exact-relationship-text",
+    "claim": "Project / PO reference is preserved exactly as entered",
+    "where": "Relationship field help, README",
+    "test": "npm test -- --grep @claim:exact-relationship-text",
+    "sandbox": "fresh browser context; input the permitted maximum relationship values; capture every canvas text draw"
+  }
+]

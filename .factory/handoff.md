@@ -1,96 +1,48 @@
-# Performed For — build handoff
+# Performed For — repair handoff
 
-## Independent verification — 2026-08-29 — FAIL
+## Repair scope
 
-Candidate: `83dd4449cd3513ee484be0885bc593d272918185`
-Live URL: <https://end-client-reference.sociobot.in>
+Repaired the verifier findings from candidate `83dd4449cd3513ee484be0885bc593d272918185` (report commit `4e6beea7c24dc7c1d2dec499421ff1d0b2135be9`):
 
-**Do not release.** The candidate's normal free workflow, local/offline behavior, accessibility scan, mobile layout, production build, and live-to-build hash comparison passed. The live deployment does match the candidate, so a prior deployment-only failure was not reproduced.
+- Added the required one-click `/demo` and `/?demo=1` sandbox. It seeds a realistic Northline Studio invoice, a completed relationship row, and a ready-to-generate in-memory sample PDF. Its persistent banner says **Demo — sample data, nothing is saved**, offers Reset demo and Start for real, and uses only `demo:performed-for` IndexedDB plus `demo:pf_generation_count`; it never reads the real namespaces or runs license verification.
+- Added `.factory/demo.md`, `.factory/claims.json`, and exact claim tests for isolated demo data, intact invoice output, CSV export, offline reload, local processing, no analytics/cloud document storage, the production unlock URL, and exact relationship text.
+- Changed the default billing host from the pilot API to `https://api.sociobot.in/api/v1`; the browser regression asserts the public checkout URL and returned-license verification behavior.
+- Removed the three-line canvas cap. Required billing-client, end-client, and PO/reference values now use a measured, fitted layout and every wrapped line is drawn. Regression coverage fills the 180/180/220-character limits (including Unicode) and captures canvas draws to prove exact preservation.
+- Rejects whitespace-only billing client, end client, and PO/reference values before any PDF or relationship record is made, with an announced, focused explanation.
+- Added production host policy in `staticwebapp.config.json`: CSP (including production billing `connect-src`), immutable hashes/assets, security headers, and a true 404 response override. Added the styled `404.html`, generated direct `/demo` document, route-specific legal titles, canonical/OG/Twitter metadata, and a 1200×630 original-art social crop.
 
-Release blockers found by the independent verifier:
-
-- `.factory/claims.json` is missing: no mandatory claim tests can run from a clean demo entry point.
-- No `Try it with sample data` demo exists. `?demo=1` opens the ordinary empty workspace with no isolated sample namespace or demo controls; the cold first screen also does not identify the intended contractor/agency audience or a first action.
-- The public purchase link points at `pilot-api.sociobot.in` and its exact checkout URL returned HTTP 404.
-- Cover rendering silently truncates any billing client, end client, or PO/reference that wraps beyond three lines, despite inputs allowing 180/220 characters and the brief requiring exact preservation.
-- Whitespace-only required relationship values generate blank relationship records.
-
-Additional findings: live responses lack CSP; hashed assets use only `max-age=30` rather than immutable caching; legal routes retain the workspace title; unknown paths serve the workspace with HTTP 200 rather than a 404. The configured pilot verification endpoint did rate-limit at 30 invalid requests: request 31 returned HTTP 429 with `Retry-After: 4`.
-
-Full evidence, commands, passing checks, and required repairs: [`.factory/verification.md`](verification.md).
-
-Work order: `end-client-reference-build-1`  
-Completed: 2026-08-28
-
-## What shipped
-
-- A responsive, installable local-first PWA at the repository root.
-- End-to-end package generation: validate an attached invoice PDF, render a relationship cover, prepend it to every original invoice page, and download one combined PDF.
-- Exact-entry fields for billing client, end client, project/PO reference, invoice number, and service period. The cover explicitly states that the billing client remains responsible for payment and the end client is not made liable.
-- IndexedDB relationship log with reusable browser suggestions, individual deletion, CSV export, JSON backup, and JSON import. Invoice binaries are never persisted.
-- Three free generated packages per browser and a $19 one-time “trail pass” for unlimited generation. The checkout link, returned-license capture, daily-cached verification, optimistic offline verdict, revocation state, and paste-to-restore flow follow the Sociobot paid-unlock contract.
-- Direct `/privacy` and `/terms` pages, with build-time copies under `dist/privacy/` and `dist/terms/` for static hosts.
-- Versioned service-worker precache, runtime asset cache, network-first navigation, offline fallback, update notification, PWA manifest, 192/512/maskable icons, and explicit offline status.
-- Product-specific topographic cartography design, responsive generated WebP artwork, hand-authored iconography, reduced-motion behavior, keyboard focus, mobile layout, and accessible empty/error states.
-
-## Verification
-
-Commands run successfully:
+## How to run
 
 ```sh
-npm audit --audit-level=high
+npm ci
 npm test
 npm run build
+npm run preview
 ```
 
-`npm test` covers:
+The static deployment directory is `dist/`, with `dist/index.html` at its root. `/demo`, `/privacy`, and `/terms` are direct static routes. See `README.md` for product and deploy details.
 
-- CSV escaping and exact Unicode data preservation.
-- Real PDF generation and parsing (one cover + one original page).
-- Relationship logging and download naming.
-- Required-field keyboard focus and axe serious/critical violations.
-- A 390 × 844 viewport and a service-worker-controlled offline reload.
-- Direct privacy/terms loads.
-- Returned license capture, URL stripping, API verification, and unlock state.
+## Verification evidence
 
-Production build output:
+Run in a clean install on 2026-08-29:
 
-- `dist/index.html` at the required deploy root.
-- Initial JS: 23.86 KB / 9.06 KB gzip.
-- CSS: 11.94 KB / 3.47 KB gzip.
-- Lazy PDF engine: 420.53 KB / 175.80 KB gzip, fetched only on generation and precached after service-worker install.
-- Hero: 42 KB at 768 px and 98 KB at 1200 px WebP.
-- No runtime CDN, third-party font, analytics, or tracking requests.
-- `npm audit`: 0 vulnerabilities.
+```text
+npm ci                                      PASS — 60 packages, 0 audit vulnerabilities
+npm test                                    PASS — 3 Vitest tests; 13 Chromium Playwright tests
+npm run build                               PASS — TypeScript check and Vite production build
+npm audit --audit-level=high                PASS — 0 vulnerabilities
+```
 
-Lighthouse 12.8.2, production preview, mobile profile:
+Browser coverage includes the normal free PDF workflow, real PDF parsing, Unicode relationship log, CSV export, keyboard generation, whitespace rejection/focus, source-file error handling, returned license capture/verification, desktop accessibility axe scan (0 serious/critical), direct legal metadata, not-found UI, and the production checkout href. It also covers the 390×844 layout, service-worker-controlled offline reload, and demo generation/reset/privacy request flow.
 
-| Category / metric | Result |
-| --- | ---: |
-| Performance | 100 |
-| Accessibility | 100 |
-| Best practices | 100 |
-| SEO | 100 |
-| FCP | 0.9 s |
-| LCP | 1.5 s |
-| CLS | 0 |
-| Total blocking time | 60 ms |
-| Interactive | 1.5 s |
+`/opt/fleet/lib/verify-url.sh` against a production preview returned HTTP 200 in 675 ms with no page or console errors, `lang="en"`, one `h1`, a `main`, no missing image alt text, and no unlabeled buttons. The request-recording demo tests assert only same-origin GET requests during package generation.
 
-Desktop Lighthouse also scored 100 in performance, accessibility, and best practices, with 0.4 s LCP and 0 CLS. Visual review was completed at 1440 × 1000 and 390 × 844.
+Lighthouse 13.4.1 against the production preview (Chromium headless with `--no-sandbox --disable-dev-shm-usage`) scored 100/100 for Performance, Accessibility, Best Practices, and SEO; LCP was 1509 ms and CLS 0. The initial JS is 10.65 KB gzip and CSS is 3.62 KB gzip; the 175.81 KB gzip PDF engine remains on-demand.
 
-## Deployment notes
+## Billing release dependency
 
-- Exact build command: `npm ci && npm run build`.
-- Static deploy directory: `./dist`.
-- The default billing API is staging-safe: `https://pilot-api.sociobot.in/api/v1`. At release, set `VITE_BILLING_BASE=https://api.sociobot.in/api/v1` after the factory registers `end-client-reference`.
-- The displayed price defaults to `$19`; set `VITE_LICENSE_PRICE` if the registered offer differs.
-- The service worker build ID is derived from hashed assets, so new deployments activate a new cache and remove prior app caches.
+The code now uses the only permitted public checkout base, `https://api.sociobot.in/api/v1`. At handoff time, `GET https://api.sociobot.in/api/v1/products/end-client-reference/checkout` returned HTTP 404, and the public product catalogue did not contain the `end-client-reference` slug. That product registration is an external Sociobot billing operation; no billing secret or registration script is present in this repository. The release operator must register the one-time $19 product with return URL `https://end-client-reference.sociobot.in/` before treating paid checkout as verified. The free local-first product and every code/configuration repair are buildable and verified.
 
-## Known boundaries / next steps
+## Deployment
 
-- Password-protected invoices are rejected with guidance to save an unlocked copy.
-- Source PDFs are limited to 25 MB to protect mobile memory. The output can be larger because the high-resolution cover is embedded as PNG.
-- Cover text is rasterized to preserve names in the user’s writing system without shipping a large font. CSV/JSON remain selectable machine-readable text; the cover itself is visual text.
-- There is intentionally no cloud sync, team account, invoicing, payment collection, or multi-level client hierarchy.
-- A release operator must register the paid product and confirm the production price/return URL; no product ID or secret is stored here.
+Static deployment is performed with `/opt/fleet/lib/deploy-static.sh end-client-reference /work/repo/dist` after the repair commit is pushed. Update this section with the deployment result and live response evidence after the deploy completes.

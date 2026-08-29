@@ -1,19 +1,23 @@
 # Performed For
 
-Performed For adds the missing “services performed for” relationship to an invoice without replacing anyone’s invoicing system. A subcontractor, fractional specialist, or white-label agency attaches an existing invoice PDF, enters the billing client, end client, and project/PO reference, then downloads one PDF containing a clear cover followed by the unchanged invoice pages.
+Performed For adds a clear end-client cover to an existing invoice PDF. It is for subcontractors, fractional specialists, and white-label agencies who bill a prime client but need to identify the ultimate customer and project.
 
-The app is a local-first offline PWA. Invoice files are processed in browser memory and never uploaded or retained. Relationship metadata is kept in IndexedDB and can be exported to CSV or backed up/imported as JSON.
+Start with the one-click [sample demo](https://end-client-reference.sociobot.in/demo), or choose an invoice and enter its billing client, end client, and project/PO reference. The download contains the cover followed by the original invoice page.
 
 Live: <https://end-client-reference.sociobot.in>
 
-## Product boundaries
+## What it does
 
 - Generates a companion cover and combines it with an existing PDF.
-- Maintains a reusable local relationship log and CSV report.
+- Maintains a relationship log and CSV report in the browser.
 - Clearly says that the end client is not liable for payment.
 - Does not create invoices, collect payment, manage contacts, or model entity trees.
 
 Three packages are free. A $19 one-time license unlocks unlimited generation and relationship recall. Checkout and license verification use the Sociobot billing API; no payment provider is embedded in this app.
+
+## Demo and data
+
+`/demo` and `/?demo=1` open a completed Northline Studio example. The persistent demo banner can reset the sample or start a real workspace. Demo records use the separate `demo:performed-for` IndexedDB namespace; ordinary records use `performed-for`. See [the demo sandbox notes](.factory/demo.md) and [tested product claims](.factory/claims.json).
 
 ## Run locally
 
@@ -33,7 +37,7 @@ npm run preview
 
 Optional build-time variables:
 
-- `VITE_BILLING_BASE` — billing API root. Defaults to the staging-safe `https://pilot-api.sociobot.in/api/v1`.
+- `VITE_BILLING_BASE` — billing API root. Defaults to `https://api.sociobot.in/api/v1` for the public release.
 - `VITE_LICENSE_PRICE` — displayed one-time price. Defaults to `$19`.
 
 ## Test and build
@@ -43,14 +47,14 @@ npm test
 npm run build
 ```
 
-`npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, accessibility, mobile layout, direct legal routes, and offline reload. The pinned Playwright version is 1.58.2. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/privacy` and `/terms` documents, and a service worker with the hashed assets injected into its precache.
+`npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, exact long cover values, whitespace validation, the isolated demo, exported CSV, accessibility, mobile layout, direct legal routes, and offline reload. The pinned Playwright version is 1.58.2. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/demo`, `/privacy`, and `/terms` documents, a styled 404, host headers, and a service worker with the hashed assets injected into its precache.
 
 Deploy the contents of `dist/` to a static host. The repository does not manage DNS, billing registration, or infrastructure.
 
 ## Data and security notes
 
 - The original PDF is held only long enough to create the local download.
-- Generated cover text is rasterized before being embedded so names in the user’s writing system render as entered; the CSV/JSON remain machine-readable text.
+- Generated cover text is rasterized before being embedded so names in the user’s writing system render as entered; CSV/JSON remain machine-readable text.
 - Individual records can be deleted. Clearing the site’s browser data removes records and the device’s saved license.
 - No analytics, third-party scripts, CDN fonts, or cloud document storage are used.
 

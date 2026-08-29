@@ -62,3 +62,4 @@ Prompt sheet:
 - Generation date: 2026-08-28.
 - License/provenance: original AI-generated artwork commissioned for this product; no real people, brands, or copyrighted characters.
 - Source PNG and prompt sidecar live in `assets/src/`; optimized responsive WebP derivatives ship from `public/art/` (the host converter’s AVIF output was rejected during review as invalid).
+- `public/art/performed-for-social.webp` is a hand-reviewed 1200 × 630 center crop of that same generated source for Open Graph and Twitter previews; it has no added text, people, brands, or marks.

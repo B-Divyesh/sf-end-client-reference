@@ -1,7 +1,7 @@
 import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
-for (const route of ['privacy', 'terms']) {
+for (const route of ['privacy', 'terms', 'demo']) {
   await mkdir(new URL(`../dist/${route}/`, import.meta.url), { recursive: true });
   await copyFile(new URL('../dist/index.html', import.meta.url), new URL(`../dist/${route}/index.html`, import.meta.url));
 }
