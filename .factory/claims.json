@@ -25,7 +25,7 @@
     "claim": "Works offline after the first visit",
     "where": "Landing facts, README",
     "test": "npm test -- --grep @claim:offline-reload",
-    "sandbox": "fresh browser context; load app once, wait for service worker control, set offline, reload"
+    "sandbox": "fresh isolated 390 px browser context against a fresh production build and Vite preview; await service-worker activation and controller acquisition; set the context offline; reload to a 200 response; generate and parse the sample PDF without a network"
   },
   {
     "id": "runs-on-device",

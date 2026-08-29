@@ -8,7 +8,9 @@ startApp().catch((error) => {
 });
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch((error) => console.warn('Offline setup failed', error)));
+  // Register as soon as the production module runs. Waiting for a later load
+  // listener can miss the event when the app shell itself came from the cache.
+  void navigator.serviceWorker.register('/sw.js').catch((error) => console.warn('Offline setup failed', error));
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type !== 'UPDATE_AVAILABLE') return;
     const toast = document.querySelector<HTMLElement>('#toast');

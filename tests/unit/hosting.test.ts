@@ -16,4 +16,10 @@ describe('static-host release policy', () => {
     expect(routeBuilder).toContain("new URL('../dist/index.html'");
     expect(routeBuilder).toContain("new URL('../dist/404.html'");
   });
+
+  it('always tests the PWA through a fresh production preview', async () => {
+    const playwrightConfig = await readFile('playwright.config.ts', 'utf8');
+    expect(playwrightConfig).toContain("command: 'npm run build && npm run preview -- --port 4173'");
+    expect(playwrightConfig).toContain('reuseExistingServer: false');
+  });
 });

@@ -95,27 +95,6 @@ test('keeps every route axe-clean and announces an available update', async ({ p
   await expect(page.locator('#toast')).toBeVisible();
 });
 
-test('works at 390px and reloads offline from the service worker @claim:offline-reload', async ({ page, context }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Generate package' })).toBeVisible();
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
-  const cachedScripts = await page.evaluate(async () => {
-    const keys = await caches.keys();
-    const entries = await Promise.all(keys.map(async (key) => {
-      const cache = await caches.open(key);
-      return Promise.all((await cache.keys()).filter((request) => request.url.endsWith('.js')).map(async (request) => ({ url: request.url, size: (await (await cache.match(request))?.blob())?.size ?? 0 })));
-    }));
-    return entries.flat();
-  });
-  expect(cachedScripts.some((entry) => entry.size > 1_000)).toBe(true);
-  await context.setOffline(true);
-  await page.reload();
-  await expect(page.getByRole('heading', { name: 'Add the end client to every invoice.' })).toBeVisible();
-  await expect(page.getByText('Offline.', { exact: false })).toBeVisible();
-});
-
 test('legal routes are direct-loadable and semantic', async ({ page }) => {
   for (const [route, title] of [['/privacy', 'Privacy — Performed For'], ['/terms', 'Terms — Performed For']] as const) {
     await page.goto(route);

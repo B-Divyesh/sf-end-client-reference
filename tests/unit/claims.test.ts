@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 interface Claim {
@@ -12,7 +12,11 @@ interface Claim {
 describe('public claim registry', () => {
   it('gives every declared claim one exact browser-test tag', async () => {
     const claims = JSON.parse(await readFile('.factory/claims.json', 'utf8')) as Claim[];
-    const browserTests = await readFile('tests/e2e/workspace.spec.ts', 'utf8');
+    const browserTests = (await Promise.all(
+      (await readdir('tests/e2e'))
+        .filter((name) => name.endsWith('.spec.ts'))
+        .map((name) => readFile(`tests/e2e/${name}`, 'utf8')),
+    )).join('\n');
     expect(new Set(claims.map(({ id }) => id)).size).toBe(claims.length);
     for (const claim of claims) {
       expect(claim.claim).not.toBe('');
