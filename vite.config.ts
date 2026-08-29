@@ -1,9 +1,18 @@
 import { defineConfig } from 'vite';
-import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync } from 'node:fs';
 import packageJson from './package.json' with { type: 'json' };
 
-const buildId = process.env.GITHUB_SHA?.slice(0, 12)
-  ?? execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { encoding: 'utf8' }).trim();
+const productFiles = [
+  'index.html',
+  'public/sw.js',
+  'scripts/copy-routes.mjs',
+  ...readdirSync('src', { recursive: true }).map((name) => `src/${name}`),
+].sort();
+const buildId = process.env.VITE_BUILD_ID ?? productFiles.reduce(
+  (hash, file) => hash.update(file).update(readFileSync(file)),
+  createHash('sha256'),
+).digest('hex').slice(0, 12);
 
 export default defineConfig({
   build: { target: 'es2022', sourcemap: true },
