@@ -1,5 +1,24 @@
 # Performed For — build handoff
 
+## Independent verification — 2026-08-29 — FAIL
+
+Candidate: `83dd4449cd3513ee484be0885bc593d272918185`
+Live URL: <https://end-client-reference.sociobot.in>
+
+**Do not release.** The candidate's normal free workflow, local/offline behavior, accessibility scan, mobile layout, production build, and live-to-build hash comparison passed. The live deployment does match the candidate, so a prior deployment-only failure was not reproduced.
+
+Release blockers found by the independent verifier:
+
+- `.factory/claims.json` is missing: no mandatory claim tests can run from a clean demo entry point.
+- No `Try it with sample data` demo exists. `?demo=1` opens the ordinary empty workspace with no isolated sample namespace or demo controls; the cold first screen also does not identify the intended contractor/agency audience or a first action.
+- The public purchase link points at `pilot-api.sociobot.in` and its exact checkout URL returned HTTP 404.
+- Cover rendering silently truncates any billing client, end client, or PO/reference that wraps beyond three lines, despite inputs allowing 180/220 characters and the brief requiring exact preservation.
+- Whitespace-only required relationship values generate blank relationship records.
+
+Additional findings: live responses lack CSP; hashed assets use only `max-age=30` rather than immutable caching; legal routes retain the workspace title; unknown paths serve the workspace with HTTP 200 rather than a 404. The configured pilot verification endpoint did rate-limit at 30 invalid requests: request 31 returned HTTP 429 with `Retry-After: 4`.
+
+Full evidence, commands, passing checks, and required repairs: [`.factory/verification.md`](verification.md).
+
 Work order: `end-client-reference-build-1`  
 Completed: 2026-08-28
 
