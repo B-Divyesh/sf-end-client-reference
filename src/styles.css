@@ -192,6 +192,10 @@ footer p span { flex-basis: 100%; }
   .record-actions { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 360px) {
+  .site-header nav a:nth-child(3) { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

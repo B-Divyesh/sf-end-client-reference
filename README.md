@@ -51,6 +51,8 @@ npm run build
 
 `npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, exact source-page content streams, free and size boundaries, demo disposal, exported CSV, accessibility, mobile layout, direct legal routes, and offline reload. Playwright always creates a fresh production build and Vite preview; it will not reuse a development server for PWA checks. The offline claim uses an isolated browser context, waits for service-worker control, reloads offline, and generates a sample PDF without the network. The pinned Playwright version is 1.58.2. `npm run lint` and `npm run typecheck` run static checks. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/demo`, `/privacy`, and `/terms` documents, a standard-shell 404, host headers, and a service worker with the hashed assets injected into its precache.
 
+Set `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in` to run browser checks against an already deployed artifact. Without that variable, Playwright always starts the fresh local production preview.
+
 Deploy the contents of `dist/` to a static host. The repository does not manage DNS, billing registration, or infrastructure.
 
 ## Data and security notes

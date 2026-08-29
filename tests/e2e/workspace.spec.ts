@@ -329,7 +329,7 @@ test('shows focus on Import JSON and moves focus after skip and route navigation
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
 });
 
-test('keeps interactive touch targets at least 44px at 390px', async ({ page }) => {
+test('keeps 44px touch targets at 390px and prevents overflow at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const summary = await page.getByText('Have a license?', { exact: true }).boundingBox();
@@ -339,4 +339,8 @@ test('keeps interactive touch targets at least 44px at 390px', async ({ page }) 
   expect(privacy?.height).toBeGreaterThanOrEqual(44);
   expect(terms?.height).toBeGreaterThanOrEqual(44);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.setViewportSize({ width: 320, height: 720 });
+  await expect(page.getByRole('link', { name: 'Workspace' })).toBeVisible();
+  await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });

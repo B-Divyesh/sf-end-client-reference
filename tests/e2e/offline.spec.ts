@@ -36,7 +36,7 @@ test('reloads and generates a package offline from a fresh production visit @cla
     expect(workerState).toEqual({
       active: 'activated',
       controlled: true,
-      scriptURL: 'http://127.0.0.1:4173/sw.js',
+      scriptURL: new URL('/sw.js', page.url()).href,
     });
 
     const precache = await page.evaluate(async () => {
