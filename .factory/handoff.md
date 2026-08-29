@@ -45,4 +45,6 @@ The code now uses the only permitted public checkout base, `https://api.sociobot
 
 ## Deployment
 
-Static deployment is performed with `/opt/fleet/lib/deploy-static.sh end-client-reference /work/repo/dist` after the repair commit is pushed. Update this section with the deployment result and live response evidence after the deploy completes.
+Deployed commit `5191a3a1963b50d6354d715ddf6965800eece153` with `/opt/fleet/lib/deploy-static.sh end-client-reference /work/repo/dist` on 2026-08-29. Live URL: <https://end-client-reference.sociobot.in>.
+
+Live `verify-url.sh` passed: HTTP 200 in 677 ms, no console/page errors, correct title/lang/main/one-h1/alt/button checks. Live `/demo`, `/privacy`, and `/terms` return 200; `/does-not-exist` returns 404. The deployed response includes CSP, and the hashed entry asset returns `Cache-Control: public, max-age=31536000, immutable`.
