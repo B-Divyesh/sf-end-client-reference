@@ -1,0 +1,79 @@
+[
+  {
+    "id": "demo-isolated",
+    "claim": "Demo data stays separate and is discarded when you start for real",
+    "command": "npm test -- --grep @claim:demo-isolated",
+    "exit": 0,
+    "seconds": "17.9"
+  },
+  {
+    "id": "original-invoice-intact",
+    "claim": "Keeps the original invoice intact",
+    "command": "npm test -- --grep @claim:original-invoice-intact",
+    "exit": 0,
+    "seconds": "14.9"
+  },
+  {
+    "id": "csv-export",
+    "claim": "Exports the relationship log as CSV",
+    "command": "npm test -- --grep @claim:csv-export",
+    "exit": 0,
+    "seconds": "13.9"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "Works offline after the first visit",
+    "command": "npm test -- --grep @claim:offline-reload",
+    "exit": 0,
+    "seconds": "13.8"
+  },
+  {
+    "id": "runs-on-device",
+    "claim": "Runs on your device",
+    "command": "npm test -- --grep @claim:runs-on-device",
+    "exit": 0,
+    "seconds": "13.2"
+  },
+  {
+    "id": "no-analytics",
+    "claim": "No analytics",
+    "command": "npm test -- --grep @claim:no-analytics",
+    "exit": 0,
+    "seconds": "13.5"
+  },
+  {
+    "id": "no-cloud-document-storage",
+    "claim": "No cloud document storage",
+    "command": "npm test -- --grep @claim:no-cloud-document-storage",
+    "exit": 0,
+    "seconds": "13.2"
+  },
+  {
+    "id": "one-time-unlock",
+    "claim": "A $19 one-time purchase unlocks unlimited packages",
+    "command": "npm test -- --grep @claim:one-time-unlock",
+    "exit": 0,
+    "seconds": "16.3"
+  },
+  {
+    "id": "pdf-size-limit",
+    "claim": "Accepts invoice PDFs up to 25 MB",
+    "command": "npm test -- --grep @claim:pdf-size-limit",
+    "exit": 0,
+    "seconds": "23.2"
+  },
+  {
+    "id": "three-free-packages",
+    "claim": "Three packages are free",
+    "command": "npm test -- --grep @claim:three-free-packages",
+    "exit": 0,
+    "seconds": "17.6"
+  },
+  {
+    "id": "exact-relationship-text",
+    "claim": "Project / PO reference is preserved exactly as entered",
+    "command": "npm test -- --grep @claim:exact-relationship-text",
+    "exit": 0,
+    "seconds": "15.9"
+  }
+]

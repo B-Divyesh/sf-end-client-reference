@@ -1,0 +1,26 @@
+{
+  "afterImport": {
+    "toast": "That file is not a valid Performed For backup.",
+    "h1": 1,
+    "events": []
+  },
+  "afterReload": {
+    "h1": 1,
+    "body": "Skip to main content\nThe workspace could not open\n\nReload the page. If the problem continues, clear this site’s browser data and try again.",
+    "events": [
+      "console: TypeError: e.replace is not a function\n    at K (https://end-client-reference.sociobot.in/assets/index-B41NwSgV.js:2:7044)\n    at https://end-client-reference.sociobot.in/assets/index-B41NwSgV.js:25:13\n    at Array.map (<anonymous>)\n    at Z (https://end-client-reference.sociobot.in/assets/index-B41NwSgV.js:23:16)\n    at $ (https://end-client-reference.sociobot.in/assets/index-B41NwSgV.js:69:509)\n    at async ae (https://end-client-reference.sociobot.in/assets/index-B41NwSgV.js:70:6053)"
+    ]
+  },
+  "dbRecords": [
+    {
+      "id": "poison",
+      "billingClient": 7,
+      "endClient": "End",
+      "reference": "REF",
+      "createdAt": "2026-08-29T00:00:00Z",
+      "invoiceNumber": "",
+      "servicePeriod": "",
+      "sourceFileName": "x.pdf"
+    }
+  ]
+}

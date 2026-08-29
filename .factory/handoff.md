@@ -1,4 +1,22 @@
-# Performed For — repair handoff
+# Performed For — verification handoff
+
+## Current release decision — FAIL
+
+Independent verification 4 tested candidate `f099ba0077e55598b1ed7c55f7d987f259384dab` and <https://end-client-reference.sociobot.in> on 2026-08-29. **Do not release this candidate.** The live deployment matches the candidate product build; this is not a deployment-only failure.
+
+Release blockers:
+
+1. Import JSON accepts wrong-typed records into IndexedDB before rendering fails. On reload, the bad record produces a console error and replaces the workspace with an error-only screen. Recovery requires clearing all browser data, including good records and the saved license.
+2. Public JSON backup/import, record deletion, and paid relationship-recall promises have no complete entries and observable tagged tests in `.factory/claims.json`.
+3. A `%PDF-`-prefixed malformed file exposes `Cannot read properties of undefined (reading 'Pages')` instead of a plain recovery instruction.
+
+The first-read gate passes. After `npm ci`, all 11 registered claim commands pass independently. Audit, lint, typecheck, production build, 5 unit tests, 19 local Chromium tests, and 19 live Chromium tests pass. The live PWA works offline, updates its service-worker cache correctly, has no serious/critical axe findings, makes only same-origin GETs during sample generation, and matches all 20 candidate build files byte for byte. The billing API allows 30 verification requests per client window; request 31 returned 429 with `Retry-After: 4`. Lighthouse mobile scored 96/100/100/100.
+
+Full evidence and reproduction steps are in [verification-4.md](verification-4.md). No product code was modified during verification.
+
+---
+
+## Previous builder handoff (historical)
 
 ## Outcome
 

@@ -1,0 +1,97 @@
+{
+  "first": {
+    "status": 200,
+    "headers": {
+      "cache-control": "public, must-revalidate, max-age=30",
+      "content-encoding": "br",
+      "content-security-policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https://api.sociobot.in; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests",
+      "content-type": "text/html",
+      "date": "Sat, 29 Aug 2026 21:39:33 GMT",
+      "etag": "\"29372473\"",
+      "last-modified": "Sat, 29 Aug 2026 20:51:01 GMT",
+      "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": "max-age=10886400; includeSubDomains; preload",
+      "vary": "Accept-Encoding",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-xss-protection": "1; mode=block"
+    },
+    "title": "Performed For — invoice relationship covers",
+    "h1": "Add the end client to every invoice.",
+    "lede": "For subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it.",
+    "cta": "Try it with sample data",
+    "ctaBox": {
+      "x": 37,
+      "y": 752.25,
+      "width": 316,
+      "height": 48.796875
+    },
+    "h1Box": {
+      "x": 37,
+      "y": 373.75,
+      "width": 316,
+      "height": 214.9375
+    },
+    "ledeBox": {
+      "x": 37,
+      "y": 612.6875,
+      "width": 316,
+      "height": 111.5625
+    },
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "horizontalOverflow": 0
+  },
+  "tabs": [
+    {
+      "tag": "A",
+      "text": "Try it with sample data",
+      "href": "/demo",
+      "outline": "0px solid rgb(36, 89, 79)"
+    }
+  ],
+  "banner": true,
+  "pdfPages": 2,
+  "suggestedFilename": "NL-1048-performed-for.pdf",
+  "requestCount": 11,
+  "external": [],
+  "nonGet": [],
+  "errors": [],
+  "storage": {
+    "local": {},
+    "dbs": [
+      "demo:performed-for",
+      "performed-for"
+    ],
+    "records": [
+      {
+        "billingClient": "Northline Studio Ltd.",
+        "endClient": "Harbour Arts Council",
+        "reference": "HAC-2026-014 · Autumn campaign",
+        "invoiceNumber": "NL-1048",
+        "servicePeriod": "1–31 August 2026",
+        "sourceFileName": "northline-studio-invoice.pdf",
+        "id": "1987bf6a-0f4d-4134-97db-5742b8d50f94",
+        "createdAt": "2026-08-29T21:39:35.734Z"
+      },
+      {
+        "billingClient": "Northline Studio Ltd.",
+        "endClient": "Harbour Arts Council",
+        "reference": "HAC-2026-014 · Autumn campaign",
+        "invoiceNumber": "NL-1048",
+        "servicePeriod": "1–31 August 2026",
+        "sourceFileName": "northline-studio-invoice.pdf",
+        "id": "demo-northline-1048",
+        "createdAt": "2026-08-29T10:30:00.000Z"
+      }
+    ]
+  },
+  "reduce": {
+    "matches": true,
+    "transitionDuration": "1e-05s",
+    "animationDuration": "1e-05s"
+  }
+}

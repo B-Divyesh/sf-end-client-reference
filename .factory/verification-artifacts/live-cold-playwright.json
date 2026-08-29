@@ -1,0 +1,61 @@
+{
+  "status": 200,
+  "url": "https://end-client-reference.sociobot.in/",
+  "title": "Performed For — invoice relationship covers",
+  "bodyText": "Skip to main content\nPerformed For\nINVOICE ROUTE SHEETS\nWorkspace\nTry sample\nRelationship log\n\nPAYER → BENEFICIARY → ENGAGEMENT\n\nAdd the end client to every invoice.\n\nFor subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it.\n\nTry it with sample data\nUse your invoice\n\nThe sample opens a completed route in an isolated demo.\n\nRuns on your device\nKeeps the original invoice intact\nWorks offline after first visit\n\nROUTE DESK\n\nPrepare a package\n3 free packages left\n1\nInvoice PDF\n2\nRelationship\n3\nDownload\n01 Source invoice\nChoose the existing invoice PDF\nPDF only · up to 25 MB · read locally, never retained\nNo file selected\n\n02 Relationship\nBilling client\nThe company responsible for payment\nServices performed for\nThe ultimate customer; not the payer\nProject / PO reference\nPreserved exactly as entered\nInvoice number\nOptional\nService period\nOptional, in your preferred format\n\nYour output\n\nOne cover page followed by every page of the original invoice.\n\nGenerate package\n\nONE-TIME TRAIL PASS\n\nKeep every route open.\n\nThree packages are free. Pay $19 once for unlimited packages and relationship recall on this device—or restore your license anywhere.\n\nBuy the one-time unlock\nHave a license?\n\nLOCAL FIELD BOOK\n\nRelationship log\nExport CSV\nBackup JSON\nImport JSON\n◎\nNo routes logged yet\n\nYour first generated package will add its relationship here. Only metadata is saved—never the invoice PDF.\n\nPrivate by design. No analytics. No cloud document storage.\n\nPrivacy\nTerms\nBuilt by Param Factory · v1.0.0 · build e0c299227741 · Illustration generated for this product.\n\nAdd the end client to every invoice.",
+  "h1": [
+    "Add the end client to every invoice."
+  ],
+  "buttons": [
+    "",
+    "Generate package",
+    "Export CSV",
+    "Backup JSON",
+    ""
+  ],
+  "links": [
+    "Skip to main content",
+    "\n      \n      Performed ForInvoice route sheets\n    ",
+    "Workspace",
+    "Try sample",
+    "Relationship log",
+    "Try it with sample data",
+    "Use your invoice",
+    "Buy the one-time unlock",
+    "Privacy",
+    "Terms"
+  ],
+  "events": [
+    {
+      "type": "console:warning",
+      "text": "Service Worker registration blocked by Playwright"
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "url": "https://end-client-reference.sociobot.in/",
+      "resourceType": "document"
+    },
+    {
+      "method": "GET",
+      "url": "https://end-client-reference.sociobot.in/art/topography-768.webp",
+      "resourceType": "image"
+    },
+    {
+      "method": "GET",
+      "url": "https://end-client-reference.sociobot.in/assets/index-B41NwSgV.js",
+      "resourceType": "script"
+    },
+    {
+      "method": "GET",
+      "url": "https://end-client-reference.sociobot.in/assets/index-CyKJsmQw.css",
+      "resourceType": "stylesheet"
+    },
+    {
+      "method": "GET",
+      "url": "https://end-client-reference.sociobot.in/icons/icon.svg",
+      "resourceType": "image"
+    }
+  ]
+}

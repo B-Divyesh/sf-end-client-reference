@@ -1,0 +1,20 @@
+{
+  "lighthouseVersion": "13.0.1",
+  "url": "https://end-client-reference.sociobot.in/",
+  "formFactor": "mobile",
+  "scores": {
+    "performance": 96,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100
+  },
+  "metrics": {
+    "firstContentfulPaint": "0.9 s",
+    "largestContentfulPaint": "1.2 s",
+    "totalBlockingTime": "220 ms",
+    "cumulativeLayoutShift": "0",
+    "speedIndex": "1.0 s",
+    "totalTransfer": "60 KiB"
+  },
+  "note": "The first launch crashed; a retry with --disable-dev-shm-usage --disable-gpu --no-zygote completed."
+}

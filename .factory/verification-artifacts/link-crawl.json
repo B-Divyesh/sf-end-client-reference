@@ -1,0 +1,84 @@
+[
+  {
+    "text": "Skip to main content",
+    "url": "https://end-client-reference.sociobot.in/#main",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Workspace",
+    "url": "https://end-client-reference.sociobot.in/",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Try sample",
+    "url": "https://end-client-reference.sociobot.in/demo",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Relationship log",
+    "url": "https://end-client-reference.sociobot.in/#records",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Use your invoice",
+    "url": "https://end-client-reference.sociobot.in/#workspace-title",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Buy the one-time unlock",
+    "url": "https://api.sociobot.in/api/v1/products/end-client-reference/checkout",
+    "status": 303,
+    "location": "https://checkout.dodopayments.com/session/[redacted]"
+  },
+  {
+    "text": "Privacy",
+    "url": "https://end-client-reference.sociobot.in/privacy",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Terms",
+    "url": "https://end-client-reference.sociobot.in/terms",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Skip to main content",
+    "url": "https://end-client-reference.sociobot.in/demo#main",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Use your invoice",
+    "url": "https://end-client-reference.sociobot.in/demo#workspace-title",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "Skip to main content",
+    "url": "https://end-client-reference.sociobot.in/privacy#main",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "privacy@sociobot.in",
+    "url": "mailto:privacy@sociobot.in",
+    "status": "not-http"
+  },
+  {
+    "text": "Skip to main content",
+    "url": "https://end-client-reference.sociobot.in/terms#main",
+    "status": 200,
+    "location": null
+  },
+  {
+    "text": "support@sociobot.in",
+    "url": "mailto:support@sociobot.in",
+    "status": "not-http"
+  }
+]
