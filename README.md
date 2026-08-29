@@ -17,7 +17,7 @@ Three packages are free. A $19 one-time license unlocks unlimited generation and
 
 ## Demo and data
 
-`/demo` and `/?demo=1` open a completed Northline Studio example. The persistent demo banner can reset the sample or start a real workspace. Demo records use the separate `demo:performed-for` IndexedDB namespace; ordinary records use `performed-for`. See [the demo sandbox notes](.factory/demo.md) and [tested product claims](.factory/claims.json).
+`/demo` and `/?demo=1` open a completed Northline Studio example. The persistent demo banner can reset the sample or start a real workspace. Demo records use the separate `demo:performed-for` IndexedDB namespace; ordinary records use `performed-for`. Starting for real deletes the demo database and counter. See [the demo sandbox notes](.factory/demo.md) and [tested product claims](.factory/claims.json).
 
 ## Run locally
 
@@ -44,10 +44,12 @@ Optional build-time variables:
 
 ```sh
 npm test
+npm run lint
+npm run typecheck
 npm run build
 ```
 
-`npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, exact long cover values, whitespace validation, the isolated demo, exported CSV, accessibility, mobile layout, direct legal routes, and offline reload. The pinned Playwright version is 1.58.2. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/demo`, `/privacy`, and `/terms` documents, a styled 404, host headers, and a service worker with the hashed assets injected into its precache.
+`npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, exact source-page content streams, free and size boundaries, demo disposal, exported CSV, accessibility, mobile layout, direct legal routes, and offline reload. The pinned Playwright version is 1.58.2. `npm run lint` and `npm run typecheck` run static checks. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/demo`, `/privacy`, and `/terms` documents, a standard-shell 404, host headers, and a service worker with the hashed assets injected into its precache.
 
 Deploy the contents of `dist/` to a static host. The repository does not manage DNS, billing registration, or infrastructure.
 

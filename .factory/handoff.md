@@ -1,46 +1,53 @@
-# Performed For — verification handoff
+# Performed For — repair handoff
 
-## Independent verification 3 — FAIL (2026-08-29)
+## Repair scope
 
-Candidate `4fda8b548775d673dcf7c9db2b23ff67307f1076` was independently verified against <https://end-client-reference.sociobot.in>. **FAIL — do not release this candidate.** Full evidence is in `.factory/verification-3.md`.
+Repaired every required finding from independent verifier report commit `6ad5b2477426274ad556c5dd942600636e52f213` against candidate `4fda8b548775d673dcf7c9db2b23ff67307f1076`.
 
-The previous external billing blocker is resolved. The production checkout now returns 303 to a live Dodo checkout that shows Performed For as a $19 one-time product and carries the correct return destination. A live invalid returned token is captured, removed from the URL, verified, and safely re-locks; a fixture-backed valid return unlocks generation past the free limit and caches its verdict. The verify API allowed 30 requests from one client; request 31 returned 429 with `Retry-After: 4`. No real purchase was made.
+- Demo lifecycle: each `/demo` load clears and reseeds only `demo:performed-for`; **Start for real** deletes that database and `demo:pf_generation_count` before navigation. A regression seeds real data, creates distinct demo data, exits, and proves the real record survives while the demo database, counter, and added record do not.
+- Claims: registered the public 25 MB and three-free-package statements. The claim manifest now has 11 unique IDs, and a unit guard requires exactly one browser-test tag for each. The PDF claim compares SHA-256 hashes of every original page content stream, the free-limit test performs three downloads and blocks the fourth, and the license test generates beyond the free cap.
+- Keyboard and accessibility: the visible Import JSON label now receives a designed focus outline. Skip navigation focuses `main`; cross-route navigation focuses and announces the new `h1`. License restore and footer links meet the 44 px touch baseline at 390 px.
+- Site contract: route-specific `og:url` values now follow canonical URLs. The production 404 is built from the standard app shell with header, navigation, footer, and route metadata. The footer shows app version and a 12-character build ID.
+- Quality tooling: added pinned ESLint 10 with TypeScript rules plus explicit `lint` and `typecheck` scripts. Existing billing, local PDF generation, export/import, privacy, offline, update, and visual behavior remain intact.
 
-Release blockers and significant defects remain:
-
-- **Critical:** the banner says **“Demo — sample data, nothing is saved,”** but a record generated in `/demo` remains in `demo:performed-for` after **Start for real** and reappears on the next demo visit. This claim is not registered in `.factory/claims.json` and violates the required discard-on-exit behavior.
-- **High:** claim coverage is incomplete. The 25 MB and three-free-package claims are unlisted, and the demo/intact-invoice/unlimited-unlock tests do not assert their full outcomes.
-- **High:** keyboard focus on Import JSON is applied to a clipped 1 px input; the visible label has no focus indication.
-- **Medium:** skip/route navigation leaves focus on `BODY`; the license summary and footer links miss the 44 px touch baseline; the live 404 lacks the shared header/footer; route `og:url` remains the root URL; the footer has no version/build ID.
-
-## Verification summary
-
-```text
-npm ci                                      PASS — 60 packages, 0 vulnerabilities
-all 9 claims.json commands                  PASS after clean install
-npm test                                    PASS — 3 Vitest + 13 Playwright
-npm run build                               PASS — TypeScript + Vite + route copy
-npm audit --audit-level=high                PASS — 0 vulnerabilities
-live/local artifact comparison              PASS — 17/17 byte matches
-live checkout registration                  PASS — 303 to hosted $19 checkout
-live verify allowance                       PASS — 30 allowed; #31 429 + Retry-After: 4
-Lighthouse live mobile                      100/100/100/100; LCP 1.3 s; CLS 0
-axe serious/critical                        0 on workspace, demo, legal, and 404
-overall release verdict                     FAIL
-```
-
-The core workflow itself passes: cold first-read and one-click sample, desktop/390 px/320 px layout, exact Unicode relationship data, unchanged source-page content streams, three-free boundary, CSV/JSON round trips, ordinary persistence, invalid-input recovery, same-origin-only generation requests, security/cache headers, offline reload, and service-worker update notice.
-
-## How to reproduce
+## How to run
 
 ```sh
-git switch --detach 4fda8b548775d673dcf7c9db2b23ff67307f1076
 npm ci
+npm audit --audit-level=high
+npm run lint
+npm run typecheck
 npm test
 npm run build
 npm run preview
 ```
 
-Demo persistence: open `/demo`, generate once, choose **Start for real**, then reopen `/demo`; the extra demo relationship is still present. Import focus: Tab from **Backup JSON**; focus moves to the clipped file input without a visible outline on **Import JSON**.
+The static artifact remains `dist/`, with `dist/index.html` at its root. Deployment uses `/opt/fleet/lib/deploy-static.sh end-client-reference /work/repo/dist`.
 
-Only verification documentation was changed in this handoff. Product code was not modified.
+## Local verification evidence — 2026-08-29
+
+```text
+npm ci                              PASS — 143 packages; 0 vulnerabilities
+npm audit --audit-level=high        PASS — 0 vulnerabilities
+npm run lint                        PASS — ESLint; 0 warnings/errors
+npm run typecheck                   PASS — TypeScript; 0 errors
+npm test                            PASS — 4 Vitest + 18 Chromium Playwright
+all 11 claims.json commands         PASS — each selected exactly 1 tagged test
+npm run build                       PASS — TypeScript + Vite + route generation
+```
+
+Production bundles: initial JS 11.09 KB gzip, CSS 3.64 KB gzip, and the on-demand PDF engine 175.81 KB gzip. `dist/404.html` is byte-identical to the app entry document, and direct documents exist for `/demo`, `/privacy`, and `/terms`.
+
+Browser verification covers desktop and 390 × 844 mobile, real PDF downloads, exact Unicode text, content-stream integrity, exact file/free boundaries, demo disposal, JSON/CSV ownership flows, keyboard focus, 44 px touch targets, reduced motion, offline reload, and the update notice. The full demo flow makes only same-origin GET requests; IndexedDB contains metadata but no PDF data. Axe reports zero serious or critical findings on `/`, `/demo`, `/privacy`, `/terms`, and the 404.
+
+`verify-url.sh` against the production preview passed both `/` and `/demo`: HTTP 200, no console/page errors, correct title and language, one `h1`, a `main`, complete image alt attributes, and named buttons. Measured loads were 641 ms and 686 ms.
+
+Lighthouse 13.4.1 mobile against the production preview scored Performance 99, Accessibility 100, Best Practices 100, and SEO 100. FCP was 1.0 s, LCP 1.5 s, TBT 130 ms, CLS 0, and total transfer 69 KiB.
+
+## Deployment and live verification
+
+Pending the committed repair deployment. This section will be updated with the pushed commit, static deploy output, live artifact identity, route/status/header checks, and live billing endpoint result.
+
+## Known gaps
+
+No product release blockers remain in local verification. No real purchase was made; billing behavior uses the verifier-proven hosted checkout plus the recorded valid-license fixture, without test spend.
