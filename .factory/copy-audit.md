@@ -17,12 +17,23 @@
 | Preserved exactly as entered | 4 | Claim registered as `exact-relationship-text`. |
 | One cover page followed by every page of the original invoice. | 11 | Claim registered as `original-invoice-intact`. |
 | Three packages are free. | 4 | Claim registered as `three-free-packages`. |
-| Pay $19 once for unlimited packages and relationship recall on this device—or restore your license anywhere. | 16 | Claim registered as `one-time-unlock`. |
+| Pay $19 once for unlimited packages and relationship recall on this device—or restore your license anywhere. | 16 | Claims registered as `one-time-unlock` and `relationship-recall`. |
 | Your first generated package will add its relationship here. | 9 | Explains the empty state. |
 | Only metadata is saved—never the invoice PDF. | 7 | Claim registered as `no-cloud-document-storage`. |
 | Private by design. | 3 | Summarized by the storage and request claims. |
 | No analytics. | 2 | Claim registered as `no-analytics`. |
 | No cloud document storage. | 4 | Claim registered as `no-cloud-document-storage`. |
+
+## Data control copy
+
+| Copy | Words | Result |
+| --- | ---: | --- |
+| Export CSV | 2 | Claim registered as `csv-export`. |
+| Backup JSON | 2 | Claim registered as `json-backup`. |
+| Import JSON | 2 | Claim registered as `json-import`. |
+| Delete individual entries in the relationship log. | 7 | Claim registered as `record-deletion`. |
+| Your valid records and saved license are unchanged. | 8 | Invalid-record recovery regression preserves both stores. |
+| Remove only unreadable records | 4 | Invalid-record recovery regression removes only rejected entries. |
 
 No landing-page sentence exceeds 22 words. The banned-word scan found no leverage, seamless, effortless, robust, powerful, intuitive, reimagine, supercharge, delightful, journey, ecosystem, or AI-powered language. “Unlock” describes the literal paid license action.
 

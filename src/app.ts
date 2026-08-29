@@ -1,6 +1,10 @@
-import { clearRecords, deleteCurrentDatabase, importRecords, listRecords, putRecord, removeRecord, setStorageNamespace } from './db';
+import {
+  clearRecords, deleteCurrentDatabase, importRecords, inspectRecords, listRecords,
+  putRecord, removeInvalidRecords, removeRecord, setStorageNamespace
+} from './db';
 import { downloadBlob, recordsToCsv, safeFilename } from './export';
 import { buildInvoicePackage } from './pdf';
+import { createRelationshipBackup, parseRelationshipBackup } from './records';
 import {
   BUY_URL, LICENSE_PRICE, captureReturnedLicense, initialLicenseState,
   saveLicense, verifyLicense, type LicenseState
@@ -130,6 +134,7 @@ async function renderWorkspace(): Promise<void> {
     isDemo ? '/demo' : '/',
   );
   let records: RelationshipRecord[] = [];
+  let invalidRecordCount = 0;
   let storageError = '';
   try {
     if (isDemo) {
@@ -137,7 +142,11 @@ async function renderWorkspace(): Promise<void> {
       localStorage.removeItem(usageKey);
       await putRecord({ ...DEMO_DETAILS, id: 'demo-northline-1048', createdAt: '2026-08-29T10:30:00.000Z' });
       records = await listRecords();
-    } else records = await listRecords();
+    } else {
+      const stored = await inspectRecords();
+      records = stored.records;
+      invalidRecordCount = stored.invalidRecords.length;
+    }
   }
   catch { storageError = 'Local storage is unavailable. You can still generate a package, but the relationship log will not be saved.'; }
   const initialLicense = isDemo
@@ -188,7 +197,9 @@ async function renderWorkspace(): Promise<void> {
       <div class="license-actions">${isDemo ? '<a class="primary link-button start-real" href="/">Start for real</a>' : `<a class="primary link-button" href="${BUY_URL}">Buy the one-time unlock</a><details><summary>Have a license?</summary><form id="restore-form"><label for="license-token">Paste license token</label><div class="inline-field"><input id="license-token" autocomplete="off" required><button type="submit" aria-label="Verify pasted license token">Verify license</button></div></form></details>`}</div>
     </section>
 
-    <section class="records" id="records" aria-labelledby="records-title"><div class="section-heading"><div><p class="eyebrow">Local field book</p><h2 id="records-title">Relationship log</h2></div><div class="record-actions"><button id="export-csv" type="button">Export CSV</button><button id="backup-json" type="button">Backup JSON</button><label class="button-label">Import JSON<input id="import-json" class="sr-only" type="file" accept="application/json,.json"></label></div></div><div id="record-list">${recordRows(records)}</div></section>
+    <section class="records" id="records" aria-labelledby="records-title"><div class="section-heading"><div><p class="eyebrow">Local field book</p><h2 id="records-title">Relationship log</h2></div><div class="record-actions"><button id="export-csv" type="button">Export CSV</button><button id="backup-json" type="button">Backup JSON</button><label class="button-label">Import JSON<input id="import-json" class="sr-only" type="file" accept="application/json,.json"></label></div></div>
+      ${invalidRecordCount ? `<div class="notice error recovery-notice" id="record-recovery" role="status"><div><strong>${invalidRecordCount} unreadable relationship record${invalidRecordCount === 1 ? ' was' : 's were'} skipped.</strong><span>Your valid records and saved license are unchanged.</span></div><button id="remove-invalid-records" type="button">Remove only unreadable records</button></div>` : ''}
+      <div id="record-list">${recordRows(records)}</div></section>
   </main>`);
 
   let selectedFile: File | null = null;
@@ -306,18 +317,32 @@ async function renderWorkspace(): Promise<void> {
   }
   bindDelete();
 
+  document.querySelector<HTMLButtonElement>('#remove-invalid-records')?.addEventListener('click', async () => {
+    if (!confirm(`Remove ${invalidRecordCount} unreadable relationship record${invalidRecordCount === 1 ? '' : 's'}? Your valid records and saved license will remain.`)) return;
+    try {
+      const removed = await removeInvalidRecords();
+      const stored = await inspectRecords();
+      records = stored.records;
+      invalidRecordCount = stored.invalidRecords.length;
+      refreshRecords(records);
+      document.querySelector('#record-recovery')?.remove();
+      toast(`${removed} unreadable relationship record${removed === 1 ? '' : 's'} removed. Your other data was kept.`);
+    } catch {
+      toast('Unreadable records could not be removed. Close other app tabs and try again.', 'error');
+    }
+  });
+
   document.querySelector('#export-csv')?.addEventListener('click', () => {
     if (!records.length) { toast('There are no relationship records to export.', 'error'); return; }
     downloadBlob(new Blob([recordsToCsv(records)], { type: 'text/csv;charset=utf-8' }), 'performed-for-relationships.csv');
   });
   document.querySelector('#backup-json')?.addEventListener('click', () => {
-    downloadBlob(new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), records }, null, 2)], { type: 'application/json' }), 'performed-for-backup.json');
+    downloadBlob(new Blob([JSON.stringify(createRelationshipBackup(records), null, 2)], { type: 'application/json' }), 'performed-for-backup.json');
   });
   document.querySelector<HTMLInputElement>('#import-json')?.addEventListener('change', async (event) => {
     const input = event.currentTarget as HTMLInputElement; const file = input.files?.[0]; if (!file) return;
     try {
-      const data = JSON.parse(await file.text()) as { records?: RelationshipRecord[] };
-      if (!Array.isArray(data.records) || data.records.some((record) => !record.id || !record.billingClient || !record.endClient || !record.reference || !record.createdAt)) throw new Error();
+      const data = parseRelationshipBackup(JSON.parse(await file.text()) as unknown);
       await importRecords(data.records); records = await listRecords(); refreshRecords(records); toast(`${data.records.length} relationship record${data.records.length === 1 ? '' : 's'} imported.`);
     } catch { toast('That file is not a valid Performed For backup.', 'error'); }
     input.value = '';

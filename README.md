@@ -10,6 +10,7 @@ Live: <https://end-client-reference.sociobot.in>
 
 - Generates a companion cover and combines it with an existing PDF.
 - Maintains a relationship log and CSV report in the browser.
+- Downloads the relationship log as JSON and imports valid version 1 backups.
 - Clearly says that the end client is not liable for payment.
 - Does not create invoices, collect payment, manage contacts, or model entity trees.
 
@@ -49,7 +50,7 @@ npm run typecheck
 npm run build
 ```
 
-`npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, exact source-page content streams, free and size boundaries, demo disposal, exported CSV, accessibility, mobile layout, direct legal routes, and offline reload. Playwright always creates a fresh production build and Vite preview; it will not reuse a development server for PWA checks. The offline claim uses an isolated browser context, waits for service-worker control, reloads offline, and generates a sample PDF without the network. The pinned Playwright version is 1.58.2. `npm run lint` and `npm run typecheck` run static checks. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/demo`, `/privacy`, and `/terms` documents, a standard-shell 404, host headers, and a service worker with the hashed assets injected into its precache.
+`npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, exact source-page content streams, backup/import, deletion, malformed-data recovery, paid recall, free and size boundaries, demo disposal, accessibility, mobile layout, direct legal routes, and offline reload. Playwright always creates a fresh production build and Vite preview; it will not reuse a development server for PWA checks. The offline claim uses an isolated browser context, waits for service-worker control, reloads offline, and generates a sample PDF without the network. The pinned Playwright version is 1.58.2. `npm run lint` and `npm run typecheck` run static checks. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/demo`, `/privacy`, and `/terms` documents, a standard-shell 404, host headers, and a service worker with the hashed assets injected into its precache.
 
 Set `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in` to run browser checks against an already deployed artifact. Without that variable, Playwright always starts the fresh local production preview.
 
@@ -59,7 +60,8 @@ Deploy the contents of `dist/` to a static host. The repository does not manage 
 
 - The original PDF is held only long enough to create the local download.
 - Generated cover text is rasterized before being embedded so names in the user’s writing system render as entered; CSV/JSON remain machine-readable text.
-- Individual records can be deleted. Clearing the site’s browser data removes records and the device’s saved license.
+- Backup JSON downloads valid records; Import JSON accepts only complete version 1 backups and saves them atomically.
+- Individual records can be deleted. If old unreadable data is found, the app can remove only those entries while keeping valid records and the saved license.
 - No analytics, third-party scripts, CDN fonts, or cloud document storage are used.
 
 See [the researched brief](.factory/brief.json), [visual system](.factory/design.md), [privacy notice](https://end-client-reference.sociobot.in/privacy), and [terms](https://end-client-reference.sociobot.in/terms).

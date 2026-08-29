@@ -20,6 +20,28 @@ async function detailedInvoiceBuffer(): Promise<Buffer> {
   return Buffer.from(await document.save({ useObjectStreams: false }));
 }
 
+function backupRecord(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: 'imported-route',
+    billingClient: 'Imported Prime',
+    endClient: 'Imported End Client',
+    reference: 'IMPORTED-PO-7',
+    invoiceNumber: 'IMP-7',
+    servicePeriod: 'August 2026',
+    sourceFileName: 'imported-invoice.pdf',
+    createdAt: '2026-08-29T09:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function backupFile(records: Record<string, unknown>[], version = 1) {
+  return {
+    name: 'performed-for-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ version, exportedAt: '2026-08-29T10:00:00.000Z', records })),
+  };
+}
+
 async function contentHashes(bytes: Uint8Array): Promise<string[][]> {
   const document = await PDFDocument.load(bytes);
   return document.getPages().map((page) => {
@@ -146,6 +168,86 @@ test('rejects whitespace-only relationship values before package generation', as
   await expect(page.locator('#form-error')).toContainText('spaces alone are not a client name');
   await expect(page.getByLabel('Billing client The company responsible for payment')).toBeFocused();
   await expect(page.locator('#record-list')).toContainText('No routes logged yet');
+});
+
+test('rejects a wrong-typed or unsupported backup atomically and keeps the workspace usable', async ({ page }) => {
+  await page.goto('/');
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  await page.locator('#import-json').setInputFiles(backupFile([
+    backupRecord({ id: 'would-have-been-imported' }),
+    backupRecord({ id: 'poison', billingClient: 7 }),
+  ]));
+  await expect(page.locator('#toast')).toHaveText('That file is not a valid Performed For backup.');
+  expect(await page.evaluate(async () => {
+    const request = indexedDB.open('performed-for');
+    return new Promise<unknown[]>((resolve, reject) => {
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const all = database.transaction('relationships').objectStore('relationships').getAll();
+        all.onsuccess = () => { database.close(); resolve(all.result); };
+        all.onerror = () => reject(all.error);
+      };
+    });
+  })).toEqual([]);
+
+  await page.locator('#import-json').setInputFiles(backupFile([backupRecord()], 2));
+  await expect(page.locator('#toast')).toHaveText('That file is not a valid Performed For backup.');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Add the end client to every invoice.' })).toBeVisible();
+  await expect(page.locator('header')).toBeVisible();
+  await expect(page.locator('#record-list')).toContainText('No routes logged yet');
+  expect(consoleErrors).toEqual([]);
+});
+
+test('skips and selectively removes an already-invalid stored record without clearing valid data', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(async ({ valid, poison }) => {
+    localStorage.setItem('sb_license:end-client-reference', 'keep-this-license');
+    localStorage.setItem('sb_license:end-client-reference:verdict', JSON.stringify({ valid: true, checkedAt: Date.now() }));
+    const request = indexedDB.open('performed-for', 1);
+    await new Promise<void>((resolve, reject) => {
+      request.onupgradeneeded = () => request.result.createObjectStore('relationships', { keyPath: 'id' });
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const transaction = database.transaction('relationships', 'readwrite');
+        transaction.objectStore('relationships').put(valid);
+        transaction.objectStore('relationships').put(poison);
+        transaction.oncomplete = () => { database.close(); resolve(); };
+        transaction.onerror = () => reject(transaction.error);
+      };
+    });
+  }, { valid: backupRecord({ id: 'valid-route', reference: 'KEEP-ME' }), poison: backupRecord({ id: 'poison', billingClient: 7 }) });
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  await page.reload();
+  await expect(page.locator('header')).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'KEEP-ME', exact: true })).toBeVisible();
+  await expect(page.locator('#record-recovery')).toContainText('1 unreadable relationship record was skipped.');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Remove only unreadable records' }).click();
+  await expect(page.locator('#toast')).toHaveText('1 unreadable relationship record removed. Your other data was kept.');
+  await expect(page.locator('#record-recovery')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('sb_license:end-client-reference'))).toBe('keep-this-license');
+  await page.reload();
+  await expect(page.getByRole('cell', { name: 'KEEP-ME', exact: true })).toBeVisible();
+  await expect(page.locator('#record-recovery')).toHaveCount(0);
+  expect(consoleErrors).toEqual([]);
+});
+
+test('turns every malformed PDF parser failure into a plain recovery instruction', async ({ page }) => {
+  await page.goto('/demo');
+  const malformed = Buffer.from('%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\nxref\n0 2\n0000000000 65535 f \n0000000009 00000 n \ntrailer\n<< /Size 2 /Root 1 0 R >>\nstartxref\n45\n%%EOF');
+  await page.locator('#invoice-file').setInputFiles({ name: 'broken.pdf', mimeType: 'application/pdf', buffer: malformed });
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await expect(page.locator('#form-error')).toHaveText('That file could not be read as a PDF. Choose the original invoice PDF and try again.');
+  await page.locator('#invoice-file').setInputFiles({ name: 'replacement.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await downloadPromise;
+  await expect(page.locator('#form-error')).toBeEmpty();
 });
 
 test('draws every allowed relationship character on the cover @claim:exact-relationship-text', async ({ page }) => {
@@ -277,6 +379,91 @@ test('exports the sample relationship as CSV @claim:csv-export', async ({ page }
   const csv = await readFile((await download.path())!, 'utf8');
   expect(csv).toContain('"Harbour Arts Council"');
   expect(csv).toContain('"HAC-2026-014 · Autumn campaign"');
+});
+
+test('downloads a complete relationship JSON backup @claim:json-backup', async ({ page }) => {
+  await page.goto('/demo');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Backup JSON' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('performed-for-backup.json');
+  const backup = JSON.parse(await readFile((await download.path())!, 'utf8')) as {
+    version: number;
+    exportedAt: string;
+    records: Array<Record<string, unknown>>;
+  };
+  expect(backup.version).toBe(1);
+  expect(Number.isFinite(Date.parse(backup.exportedAt))).toBe(true);
+  expect(backup.records).toHaveLength(1);
+  expect(backup.records[0]).toEqual({
+    id: 'demo-northline-1048',
+    billingClient: 'Northline Studio Ltd.',
+    endClient: 'Harbour Arts Council',
+    reference: 'HAC-2026-014 · Autumn campaign',
+    invoiceNumber: 'NL-1048',
+    servicePeriod: '1–31 August 2026',
+    sourceFileName: 'northline-studio-invoice.pdf',
+    createdAt: '2026-08-29T10:30:00.000Z',
+  });
+});
+
+test('imports a valid JSON backup and persists its record @claim:json-import', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#import-json').setInputFiles(backupFile([backupRecord()]));
+  await expect(page.locator('#toast')).toHaveText('1 relationship record imported.');
+  await expect(page.getByRole('cell', { name: 'IMPORTED-PO-7', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('cell', { name: 'IMPORTED-PO-7', exact: true })).toBeVisible();
+});
+
+test('deletes one relationship record and keeps the other @claim:record-deletion', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#import-json').setInputFiles(backupFile([
+    backupRecord({ id: 'delete-this', reference: 'DELETE-ME' }),
+    backupRecord({ id: 'keep-this', reference: 'KEEP-ME', createdAt: '2026-08-29T08:00:00.000Z' }),
+  ]));
+  await expect(page.locator('tbody tr')).toHaveCount(2);
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Delete DELETE-ME' }).click();
+  await expect(page.getByRole('cell', { name: 'DELETE-ME', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: 'KEEP-ME', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.getByRole('cell', { name: 'KEEP-ME', exact: true })).toBeVisible();
+});
+
+test('recalls paid client relationships from datalists after reload @claim:relationship-recall', async ({ page }) => {
+  await page.route('https://api.sociobot.in/api/v1/products/end-client-reference/verify**', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null })
+  }));
+  await page.goto('/?license=recall-license-token');
+  await expect(page.locator('#license-badge')).toContainText('unlimited');
+  await page.locator('#invoice-file').setInputFiles({ name: 'recall.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  await page.getByLabel('Billing client The company responsible for payment').fill('Recall Prime');
+  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('Recall End Client');
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('RECALL-1');
+  const firstDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await firstDownload;
+
+  await page.reload();
+  await expect(page.locator('#license-badge')).toContainText('unlimited');
+  const billingOption = page.locator('#billing-clients option[value="Recall Prime"]');
+  const endClientOption = page.locator('#end-clients option[value="Recall End Client"]');
+  await expect(billingOption).toHaveCount(1);
+  await expect(endClientOption).toHaveCount(1);
+  const billing = page.getByLabel('Billing client The company responsible for payment');
+  const endClient = page.getByLabel('Services performed for The ultimate customer; not the payer');
+  await expect(billing).toHaveAttribute('list', 'billing-clients');
+  await expect(endClient).toHaveAttribute('list', 'end-clients');
+  await billing.fill(await billingOption.getAttribute('value') ?? '');
+  await endClient.fill(await endClientOption.getAttribute('value') ?? '');
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('RECALL-USED');
+  await page.locator('#invoice-file').setInputFiles({ name: 'reused.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  const reusedDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await reusedDownload;
+  await expect(page.getByRole('cell', { name: 'RECALL-USED', exact: true })).toBeVisible();
 });
 
 test('processes the sample without third-party requests @claim:runs-on-device', async ({ page }) => {

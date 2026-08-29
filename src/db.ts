@@ -1,4 +1,5 @@
 import type { RelationshipRecord } from './types';
+import { isRelationshipRecord } from './records';
 
 const DB_NAME = 'performed-for';
 const STORE = 'relationships';
@@ -44,10 +45,19 @@ async function transaction<T>(mode: IDBTransactionMode, action: (store: IDBObjec
 
 export async function listRecords(): Promise<RelationshipRecord[]> {
   const records = await transaction('readonly', (store) => store.getAll());
-  return (records as RelationshipRecord[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return (records as unknown[]).filter(isRelationshipRecord).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function inspectRecords(): Promise<{ records: RelationshipRecord[]; invalidRecords: unknown[] }> {
+  const stored = await transaction('readonly', (store) => store.getAll()) as unknown[];
+  return {
+    records: stored.filter(isRelationshipRecord).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    invalidRecords: stored.filter((record) => !isRelationshipRecord(record)),
+  };
 }
 
 export function putRecord(record: RelationshipRecord): Promise<IDBValidKey> {
+  if (!isRelationshipRecord(record)) return Promise.reject(new Error('Invalid relationship record.'));
   return transaction('readwrite', (store) => store.put(record));
 }
 
@@ -56,6 +66,7 @@ export function removeRecord(id: string): Promise<undefined> {
 }
 
 export async function importRecords(records: RelationshipRecord[]): Promise<void> {
+  if (!records.every(isRelationshipRecord)) throw new Error('Import contains an invalid relationship record.');
   const db = await openDatabase();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
@@ -65,6 +76,31 @@ export async function importRecords(records: RelationshipRecord[]): Promise<void
     tx.onerror = () => reject(tx.error ?? new Error('Import could not be saved.'));
   });
   db.close();
+}
+
+/** Delete only unreadable entries, preserving valid records and all localStorage data. */
+export async function removeInvalidRecords(): Promise<number> {
+  const db = await openDatabase();
+  let removed = 0;
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const request = tx.objectStore(STORE).openCursor();
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) return;
+      if (!isRelationshipRecord(cursor.value)) {
+        cursor.delete();
+        removed += 1;
+      }
+      cursor.continue();
+    };
+    request.onerror = () => reject(request.error ?? new Error('Unreadable records could not be checked.'));
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error('Unreadable records could not be removed.'));
+    tx.onabort = () => reject(tx.error ?? new Error('Unreadable records could not be removed.'));
+  });
+  db.close();
+  return removed;
 }
 
 export async function clearRecords(): Promise<void> {

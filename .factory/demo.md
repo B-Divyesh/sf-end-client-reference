@@ -4,4 +4,4 @@ Open `/demo` (or `/?demo=1`) to load a completed Northline Studio invoice route.
 
 The persistent **Demo — sample data, nothing is saved** banner offers **Reset demo** and **Start for real**. Every demo load clears and reseeds only the `demo:performed-for` IndexedDB database and removes the `demo:pf_generation_count` localStorage key. **Start for real** deletes that demo database and counter before opening the ordinary workspace. The ordinary workspace uses the separate `performed-for` database and `pf_generation_count` key. Demo mode never reads or writes those real-data namespaces and does not run license verification.
 
-Use the sample to generate a combined PDF, inspect the relationship log, or export CSV. Start for real returns to `/`, discards the demo namespace, and leaves the visitor’s records untouched.
+Use the sample to generate a combined PDF, inspect the relationship log, export CSV, or download and re-import a version 1 JSON backup. Start for real returns to `/`, discards the demo namespace, and leaves the visitor’s records untouched.

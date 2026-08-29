@@ -121,6 +121,9 @@ details label { color: white; font-size: 14px; }
 
 .records { scroll-margin-top: 20px; }
 .record-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.recovery-notice { margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.recovery-notice div { display: grid; gap: 2px; }
+.recovery-notice button { flex: 0 0 auto; border-color: var(--danger); color: var(--danger); }
 .button-label { display: inline-flex; align-items: center; padding: 9px 15px; border: 1px solid var(--forest); border-radius: 5px; color: var(--forest); cursor: pointer; }
 .button-label:focus-within { outline: 3px solid var(--coral); outline-offset: 3px; }
 .table-scroll { overflow-x: auto; border: 1px solid var(--moss); background: var(--sheet); }
@@ -176,6 +179,7 @@ footer p span { flex-basis: 100%; }
   .records .section-heading { margin-bottom: 18px; }
   .record-actions { display: grid; width: 100%; grid-template-columns: 1fr 1fr; }
   .record-actions > * { justify-content: center; }
+  .recovery-notice { align-items: stretch; flex-direction: column; }
   .license-panel { padding: 32px 24px; }
   .inline-field { grid-template-columns: 1fr; }
   footer { flex-direction: column; }

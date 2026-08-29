@@ -21,6 +21,27 @@
     "sandbox": "fresh browser context; /demo; download and inspect the sample CSV"
   },
   {
+    "id": "json-backup",
+    "claim": "Downloads the relationship log as a complete JSON backup",
+    "where": "Relationship log action, privacy notice, README",
+    "test": "npm test -- --grep @claim:json-backup",
+    "sandbox": "fresh browser context; /demo; download and parse the JSON; assert the supported version, export date, and every sample record field"
+  },
+  {
+    "id": "json-import",
+    "claim": "Imports a valid Performed For JSON backup",
+    "where": "Relationship log action, privacy notice, README",
+    "test": "npm test -- --grep @claim:json-import",
+    "sandbox": "fresh browser context; ordinary workspace; import a complete version 1 backup; reload; assert the imported relationship remains visible"
+  },
+  {
+    "id": "record-deletion",
+    "claim": "Deletes one relationship record without clearing the others",
+    "where": "Relationship log action, privacy notice, README",
+    "test": "npm test -- --grep @claim:record-deletion",
+    "sandbox": "fresh browser context; import two records; confirm deletion of one; reload; assert only the selected record was removed"
+  },
+  {
     "id": "offline-reload",
     "claim": "Works offline after the first visit",
     "where": "Landing facts, README",
@@ -54,6 +75,13 @@
     "where": "License panel, README",
     "test": "npm test -- --grep @claim:one-time-unlock",
     "sandbox": "fresh browser context at the free limit; returned-license fixture; generate another package and assert the public production checkout URL"
+  },
+  {
+    "id": "relationship-recall",
+    "claim": "A $19 one-time purchase includes client relationship recall on this device",
+    "where": "License panel, terms, README",
+    "test": "npm test -- --grep @claim:relationship-recall",
+    "sandbox": "fresh browser context; fixture-verified license; generate a relationship; reload; assert both client datalists retain the values and use them for another generated package"
   },
   {
     "id": "pdf-size-limit",

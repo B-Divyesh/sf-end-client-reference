@@ -3,6 +3,15 @@ import type { PDFDocument as PDFDocumentType } from 'pdf-lib';
 
 const PAGE_W = 1240;
 const PAGE_H = 1754;
+const PDF_READ_ERROR = 'That file could not be read as a PDF. Choose the original invoice PDF and try again.';
+const PDF_PASSWORD_ERROR = 'Password-protected PDFs are not supported. Save an unlocked copy and try again.';
+
+function readablePdfError(error: unknown): Error {
+  if (error instanceof Error && error.message.toLowerCase().includes('encrypt')) {
+    return new Error(PDF_PASSWORD_ERROR, { cause: error });
+  }
+  return new Error(PDF_READ_ERROR, { cause: error });
+}
 
 export function wrapText(context: CanvasRenderingContext2D, text: string, width: number): string[] {
   const segments = Array.from(text);
@@ -126,21 +135,26 @@ export async function buildInvoicePackage(source: ArrayBuffer, details: PackageD
   const { PDFDocument } = await import('pdf-lib');
   let sourceDocument: PDFDocumentType;
   try { sourceDocument = await PDFDocument.load(source); }
-  catch (error) {
-    if (error instanceof Error && error.message.toLowerCase().includes('encrypt')) {
-      throw new Error('Password-protected PDFs are not supported. Save an unlocked copy and try again.', { cause: error });
-    }
-    throw new Error('That file could not be read as a PDF. Choose the original invoice PDF and try again.', { cause: error });
-  }
-  if (sourceDocument.isEncrypted) throw new Error('Password-protected PDFs are not supported. Save an unlocked copy and try again.');
-  const output = await PDFDocument.create();
-  output.setTitle(`Invoice relationship — ${details.reference}`);
-  output.setSubject(`Services performed for ${details.endClient}; billed to ${details.billingClient}`);
-  output.setProducer('Performed For — local-first PWA');
-  const page = output.addPage([595.28, 841.89]);
-  const image = await output.embedPng(await coverPng(details));
-  page.drawImage(image, { x: 0, y: 0, width: 595.28, height: 841.89 });
-  const pages = await output.copyPages(sourceDocument, sourceDocument.getPageIndices());
-  pages.forEach((invoicePage) => output.addPage(invoicePage));
-  return output.save();
+  catch (error) { throw readablePdfError(error); }
+  if (sourceDocument.isEncrypted) throw new Error(PDF_PASSWORD_ERROR);
+
+  let pageIndices: number[];
+  try {
+    pageIndices = sourceDocument.getPageIndices();
+    if (pageIndices.length === 0) throw new Error('PDF has no pages.');
+  } catch (error) { throw readablePdfError(error); }
+
+  const cover = await coverPng(details);
+  try {
+    const output = await PDFDocument.create();
+    output.setTitle(`Invoice relationship — ${details.reference}`);
+    output.setSubject(`Services performed for ${details.endClient}; billed to ${details.billingClient}`);
+    output.setProducer('Performed For — local-first PWA');
+    const page = output.addPage([595.28, 841.89]);
+    const image = await output.embedPng(cover);
+    page.drawImage(image, { x: 0, y: 0, width: 595.28, height: 841.89 });
+    const pages = await output.copyPages(sourceDocument, pageIndices);
+    pages.forEach((invoicePage) => output.addPage(invoicePage));
+    return await output.save();
+  } catch (error) { throw readablePdfError(error); }
 }
