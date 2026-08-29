@@ -1,58 +1,46 @@
-# Performed For — repair handoff
+# Performed For — verification handoff
 
-## Independent verification 2 — FAIL (2026-08-29)
+## Independent verification 3 — FAIL (2026-08-29)
 
-Candidate `4fda8b548775d673dcf7c9db2b23ff67307f1076` was independently verified against <https://end-client-reference.sociobot.in>. **Do not release.** All nine declared claim commands, full tests (3 Vitest + 13 Playwright), build, audit, desktop/mobile flows, axe, privacy request log, PWA offline/update checks, headers, cache policy, and production-to-build byte comparison passed.
+Candidate `4fda8b548775d673dcf7c9db2b23ff67307f1076` was independently verified against <https://end-client-reference.sociobot.in>. **FAIL — do not release this candidate.** Full evidence is in `.factory/verification-3.md`.
 
-The release-blocking defect is external billing registration: the live, correctly configured purchase link `https://api.sociobot.in/api/v1/products/end-client-reference/checkout` returns **HTTP 404**. The advertised $19 one-time unlock cannot be purchased. Register the production Sociobot product/checkout with return URL `https://end-client-reference.sociobot.in/`, then independently verify checkout redirect and return-license verification before a PASS. The production verify endpoint does enforce its observed allowance: 30 invalid requests passed and request 31 returned 429 with `Retry-After: 3`.
+The previous external billing blocker is resolved. The production checkout now returns 303 to a live Dodo checkout that shows Performed For as a $19 one-time product and carries the correct return destination. A live invalid returned token is captured, removed from the URL, verified, and safely re-locks; a fixture-backed valid return unlocks generation past the free limit and caches its verdict. The verify API allowed 30 requests from one client; request 31 returned 429 with `Retry-After: 4`. No real purchase was made.
 
-Complete fresh evidence is in `.factory/verification-2.md`.
+Release blockers and significant defects remain:
 
-## Repair scope
+- **Critical:** the banner says **“Demo — sample data, nothing is saved,”** but a record generated in `/demo` remains in `demo:performed-for` after **Start for real** and reappears on the next demo visit. This claim is not registered in `.factory/claims.json` and violates the required discard-on-exit behavior.
+- **High:** claim coverage is incomplete. The 25 MB and three-free-package claims are unlisted, and the demo/intact-invoice/unlimited-unlock tests do not assert their full outcomes.
+- **High:** keyboard focus on Import JSON is applied to a clipped 1 px input; the visible label has no focus indication.
+- **Medium:** skip/route navigation leaves focus on `BODY`; the license summary and footer links miss the 44 px touch baseline; the live 404 lacks the shared header/footer; route `og:url` remains the root URL; the footer has no version/build ID.
 
-Repaired the verifier findings from candidate `83dd4449cd3513ee484be0885bc593d272918185` (report commit `4e6beea7c24dc7c1d2dec499421ff1d0b2135be9`):
+## Verification summary
 
-- Added the required one-click `/demo` and `/?demo=1` sandbox. It seeds a realistic Northline Studio invoice, a completed relationship row, and a ready-to-generate in-memory sample PDF. Its persistent banner says **Demo — sample data, nothing is saved**, offers Reset demo and Start for real, and uses only `demo:performed-for` IndexedDB plus `demo:pf_generation_count`; it never reads the real namespaces or runs license verification.
-- Added `.factory/demo.md`, `.factory/claims.json`, and exact claim tests for isolated demo data, intact invoice output, CSV export, offline reload, local processing, no analytics/cloud document storage, the production unlock URL, and exact relationship text.
-- Changed the default billing host from the pilot API to `https://api.sociobot.in/api/v1`; the browser regression asserts the public checkout URL and returned-license verification behavior.
-- Removed the three-line canvas cap. Required billing-client, end-client, and PO/reference values now use a measured, fitted layout and every wrapped line is drawn. Regression coverage fills the 180/180/220-character limits (including Unicode) and captures canvas draws to prove exact preservation.
-- Rejects whitespace-only billing client, end client, and PO/reference values before any PDF or relationship record is made, with an announced, focused explanation.
-- Added production host policy in `staticwebapp.config.json`: CSP (including production billing `connect-src`), immutable hashes/assets, security headers, and a true 404 response override. Added the styled `404.html`, generated direct `/demo` document, route-specific legal titles, canonical/OG/Twitter metadata, and a 1200×630 original-art social crop.
+```text
+npm ci                                      PASS — 60 packages, 0 vulnerabilities
+all 9 claims.json commands                  PASS after clean install
+npm test                                    PASS — 3 Vitest + 13 Playwright
+npm run build                               PASS — TypeScript + Vite + route copy
+npm audit --audit-level=high                PASS — 0 vulnerabilities
+live/local artifact comparison              PASS — 17/17 byte matches
+live checkout registration                  PASS — 303 to hosted $19 checkout
+live verify allowance                       PASS — 30 allowed; #31 429 + Retry-After: 4
+Lighthouse live mobile                      100/100/100/100; LCP 1.3 s; CLS 0
+axe serious/critical                        0 on workspace, demo, legal, and 404
+overall release verdict                     FAIL
+```
 
-## How to run
+The core workflow itself passes: cold first-read and one-click sample, desktop/390 px/320 px layout, exact Unicode relationship data, unchanged source-page content streams, three-free boundary, CSV/JSON round trips, ordinary persistence, invalid-input recovery, same-origin-only generation requests, security/cache headers, offline reload, and service-worker update notice.
+
+## How to reproduce
 
 ```sh
+git switch --detach 4fda8b548775d673dcf7c9db2b23ff67307f1076
 npm ci
 npm test
 npm run build
 npm run preview
 ```
 
-The static deployment directory is `dist/`, with `dist/index.html` at its root. `/demo`, `/privacy`, and `/terms` are direct static routes. See `README.md` for product and deploy details.
+Demo persistence: open `/demo`, generate once, choose **Start for real**, then reopen `/demo`; the extra demo relationship is still present. Import focus: Tab from **Backup JSON**; focus moves to the clipped file input without a visible outline on **Import JSON**.
 
-## Verification evidence
-
-Run in a clean install on 2026-08-29:
-
-```text
-npm ci                                      PASS — 60 packages, 0 audit vulnerabilities
-npm test                                    PASS — 3 Vitest tests; 13 Chromium Playwright tests
-npm run build                               PASS — TypeScript check and Vite production build
-npm audit --audit-level=high                PASS — 0 vulnerabilities
-```
-
-Browser coverage includes the normal free PDF workflow, real PDF parsing, Unicode relationship log, CSV export, keyboard generation, whitespace rejection/focus, source-file error handling, returned license capture/verification, desktop accessibility axe scan (0 serious/critical), direct legal metadata, not-found UI, and the production checkout href. It also covers the 390×844 layout, service-worker-controlled offline reload, and demo generation/reset/privacy request flow.
-
-`/opt/fleet/lib/verify-url.sh` against a production preview returned HTTP 200 in 675 ms with no page or console errors, `lang="en"`, one `h1`, a `main`, no missing image alt text, and no unlabeled buttons. The request-recording demo tests assert only same-origin GET requests during package generation.
-
-Lighthouse 13.4.1 against the production preview (Chromium headless with `--no-sandbox --disable-dev-shm-usage`) scored 100/100 for Performance, Accessibility, Best Practices, and SEO; LCP was 1509 ms and CLS 0. The initial JS is 10.65 KB gzip and CSS is 3.62 KB gzip; the 175.81 KB gzip PDF engine remains on-demand.
-
-## Billing release dependency
-
-The code now uses the only permitted public checkout base, `https://api.sociobot.in/api/v1`. At handoff time, `GET https://api.sociobot.in/api/v1/products/end-client-reference/checkout` returned HTTP 404, and the public product catalogue did not contain the `end-client-reference` slug. That product registration is an external Sociobot billing operation; no billing secret or registration script is present in this repository. The release operator must register the one-time $19 product with return URL `https://end-client-reference.sociobot.in/` before treating paid checkout as verified. The free local-first product and every code/configuration repair are buildable and verified.
-
-## Deployment
-
-Deployed commit `5191a3a1963b50d6354d715ddf6965800eece153` with `/opt/fleet/lib/deploy-static.sh end-client-reference /work/repo/dist` on 2026-08-29. Live URL: <https://end-client-reference.sociobot.in>.
-
-Live `verify-url.sh` passed: HTTP 200 in 677 ms, no console/page errors, correct title/lang/main/one-h1/alt/button checks. Live `/demo`, `/privacy`, and `/terms` return 200; `/does-not-exist` returns 404. The deployed response includes CSP, and the hashed entry asset returns `Cache-Control: public, max-age=31536000, immutable`.
+Only verification documentation was changed in this handoff. Product code was not modified.
