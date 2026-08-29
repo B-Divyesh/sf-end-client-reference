@@ -1,5 +1,13 @@
 # Performed For — repair handoff
 
+## Independent verification 2 — FAIL (2026-08-29)
+
+Candidate `4fda8b548775d673dcf7c9db2b23ff67307f1076` was independently verified against <https://end-client-reference.sociobot.in>. **Do not release.** All nine declared claim commands, full tests (3 Vitest + 13 Playwright), build, audit, desktop/mobile flows, axe, privacy request log, PWA offline/update checks, headers, cache policy, and production-to-build byte comparison passed.
+
+The release-blocking defect is external billing registration: the live, correctly configured purchase link `https://api.sociobot.in/api/v1/products/end-client-reference/checkout` returns **HTTP 404**. The advertised $19 one-time unlock cannot be purchased. Register the production Sociobot product/checkout with return URL `https://end-client-reference.sociobot.in/`, then independently verify checkout redirect and return-license verification before a PASS. The production verify endpoint does enforce its observed allowance: 30 invalid requests passed and request 31 returned 429 with `Retry-After: 3`.
+
+Complete fresh evidence is in `.factory/verification-2.md`.
+
 ## Repair scope
 
 Repaired the verifier findings from candidate `83dd4449cd3513ee484be0885bc593d272918185` (report commit `4e6beea7c24dc7c1d2dec499421ff1d0b2135be9`):
