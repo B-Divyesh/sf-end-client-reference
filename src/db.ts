@@ -77,3 +77,13 @@ export async function clearRecords(): Promise<void> {
   });
   db.close();
 }
+
+/** Remove the active namespace completely when an ephemeral demo is left. */
+export function deleteCurrentDatabase(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(databaseName());
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error ?? new Error('Demo data could not be discarded.'));
+    request.onblocked = () => reject(new Error('Demo data is still in use. Close other demo tabs and try again.'));
+  });
+}

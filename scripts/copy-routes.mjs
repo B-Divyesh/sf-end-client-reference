@@ -5,6 +5,10 @@ for (const route of ['privacy', 'terms', 'demo']) {
   await mkdir(new URL(`../dist/${route}/`, import.meta.url), { recursive: true });
   await copyFile(new URL('../dist/index.html', import.meta.url), new URL(`../dist/${route}/index.html`, import.meta.url));
 }
+// Static Web Apps rewrites unknown routes to this document while preserving
+// the requested URL. Using the app shell gives the 404 the same header,
+// navigation, metadata handling, and footer as every other route.
+await copyFile(new URL('../dist/index.html', import.meta.url), new URL('../dist/404.html', import.meta.url));
 
 const assetFiles = (await readdir(new URL('../dist/assets/', import.meta.url))).filter((name) => !name.endsWith('.map')).sort();
 const generated = assetFiles.map((name) => `/assets/${name}`);

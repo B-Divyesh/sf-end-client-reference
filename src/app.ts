@@ -1,4 +1,4 @@
-import { clearRecords, importRecords, listRecords, putRecord, removeRecord, setStorageNamespace } from './db';
+import { clearRecords, deleteCurrentDatabase, importRecords, listRecords, putRecord, removeRecord, setStorageNamespace } from './db';
 import { downloadBlob, recordsToCsv, safeFilename } from './export';
 import { buildInvoicePackage } from './pdf';
 import {
@@ -11,6 +11,7 @@ const FREE_LIMIT = 3;
 const USAGE_KEY = 'pf_generation_count';
 const isDemo = location.pathname === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
 const usageKey = isDemo ? `demo:${USAGE_KEY}` : USAGE_KEY;
+const ROUTE_FOCUS_KEY = 'pf_focus_route';
 setStorageNamespace(isDemo ? 'demo' : '');
 
 const DEMO_DETAILS: PackageDetails = {
@@ -37,7 +38,8 @@ function shell(content: string): string {
     </a>
     <nav aria-label="Primary"><a href="/">Workspace</a><a href="/demo">Try sample</a><a href="/#records">Relationship log</a></nav>
   </header>${content}
-  <footer><p>Private by design. No analytics. No cloud document storage.</p><p><a href="/privacy">Privacy</a><a href="/terms">Terms</a> · Built by Param Factory · Illustration generated for this product.</p></footer>
+  <footer><p>Private by design. No analytics. No cloud document storage.</p><p><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>Built by Param Factory · v${__APP_VERSION__} · build ${__BUILD_ID__} · Illustration generated for this product.</span></p></footer>
+  <div class="sr-only" id="route-announcer" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>`;
 }
 
@@ -47,6 +49,7 @@ function setPageMetadata(title: string, description: string, path: string): void
   document.querySelector('link[rel="canonical"]')?.setAttribute('href', `https://end-client-reference.sociobot.in${path}`);
   document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
   document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
+  document.querySelector('meta[property="og:url"]')?.setAttribute('content', `https://end-client-reference.sociobot.in${path}`);
   document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', title);
   document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', description);
 }
@@ -57,13 +60,13 @@ function renderLegal(kind: 'privacy' | 'terms'): void {
     kind === 'privacy' ? 'How Performed For keeps invoice relationship details local to your browser.' : 'Terms for Performed For invoice relationship covers.',
     `/${kind}`,
   );
-  const privacy = `<main id="main" class="legal"><p class="eyebrow">Field notes · effective 28 August 2026</p><h1>Privacy, kept local</h1>
+  const privacy = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Field notes · effective 28 August 2026</p><h1>Privacy, kept local</h1>
     <p>Performed For is designed so your invoices and relationship details stay on your device.</p>
     <h2>What the app stores</h2><p>Billing clients, end clients, references, optional invoice metadata, source filenames, and dates are stored in your browser’s IndexedDB. Your attached invoice PDF is read in memory to make the download and is not retained. License tokens and a generation count are stored in localStorage.</p>
     <h2>What leaves your device</h2><p>Nothing during ordinary cover generation. When you buy or verify an unlock, your browser connects to the Sociobot billing API and sends the license token for verification. Checkout is hosted by Sociobot/Dodo, the merchant of record. We run no behavioral analytics or advertising trackers.</p>
     <h2>Your controls</h2><p>Use Backup JSON and Export CSV to take your data with you. Delete individual entries in the relationship log. Clearing this site’s browser data removes all locally stored records and the license token from this device.</p>
     <h2>Contact</h2><p>Privacy questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`;
-  const terms = `<main id="main" class="legal"><p class="eyebrow">Route conditions · effective 28 August 2026</p><h1>Terms of use</h1>
+  const terms = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Route conditions · effective 28 August 2026</p><h1>Terms of use</h1>
     <p>Performed For creates a companion cover page from details you supply and combines it with an existing PDF. It does not issue invoices, provide accounting or legal advice, or change who owes payment.</p>
     <h2>Your responsibility</h2><p>You must have permission to process the invoice and client details you enter. Review every generated package before sending it. The billing client remains the payer; naming an end client never makes that end client liable.</p>
     <h2>One-time unlock</h2><p>The ${esc(LICENSE_PRICE)} one-time purchase unlocks unlimited package generation and reusable relationship recall for this product. Sociobot/Dodo is the merchant of record. Checkout, receipts, taxes, and refunds are handled there. A refunded or revoked purchase deactivates its license. You can restore an active license on another device.</p>
@@ -74,7 +77,7 @@ function renderLegal(kind: 'privacy' | 'terms'): void {
 
 function renderNotFound(): void {
   setPageMetadata('Page not found — Performed For', 'The requested Performed For page could not be found.', '/404');
-  app.innerHTML = shell(`<main id="main" class="legal"><p class="eyebrow">Page not found</p><h1>This route is not on the map.</h1><p>Choose the workspace to prepare an invoice relationship cover.</p><p><a class="link-button" href="/">Open workspace</a></p></main>`);
+  app.innerHTML = shell(`<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Page not found</p><h1>This route is not on the map.</h1><p>Choose the workspace to prepare an invoice relationship cover.</p><p><a class="link-button" href="/">Open workspace</a></p></main>`);
 }
 
 async function createDemoInvoice(): Promise<File> {
@@ -129,11 +132,12 @@ async function renderWorkspace(): Promise<void> {
   let records: RelationshipRecord[] = [];
   let storageError = '';
   try {
-    records = await listRecords();
-    if (isDemo && !records.length) {
+    if (isDemo) {
+      await clearRecords();
+      localStorage.removeItem(usageKey);
       await putRecord({ ...DEMO_DETAILS, id: 'demo-northline-1048', createdAt: '2026-08-29T10:30:00.000Z' });
       records = await listRecords();
-    }
+    } else records = await listRecords();
   }
   catch { storageError = 'Local storage is unavailable. You can still generate a package, but the relationship log will not be saved.'; }
   const initialLicense = isDemo
@@ -142,7 +146,7 @@ async function renderWorkspace(): Promise<void> {
   const suggestions = initialLicense.unlocked ? [...new Set(records.map((record) => record.billingClient))] : [];
   const endSuggestions = initialLicense.unlocked ? [...new Set(records.map((record) => record.endClient))] : [];
 
-  app.innerHTML = shell(`<main id="main">
+  app.innerHTML = shell(`<main id="main" tabindex="-1">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy"><p class="eyebrow">Payer → beneficiary → engagement</p><h1 id="hero-title">Add the end client to every invoice.</h1>
         <p class="lede">For subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it.</p>
@@ -153,7 +157,7 @@ async function renderWorkspace(): Promise<void> {
       <picture><source media="(max-width: 700px)" srcset="/art/topography-768.webp"><img src="/art/topography-1200.webp" srcset="/art/topography-768.webp 768w, /art/topography-1200.webp 1200w" sizes="(max-width: 700px) 100vw, 44vw" width="1200" height="800" alt="Layered paper topography showing one coral route between two separate mapped areas" fetchpriority="high" decoding="async"></picture>
     </section>
 
-    ${isDemo ? `<aside class="demo-banner" aria-label="Demo controls"><strong>Demo — sample data, nothing is saved</strong><span>Try a completed example without touching your own relationship log.</span><button id="reset-demo" type="button">Reset demo</button><a href="/">Start for real</a></aside>` : ''}
+    ${isDemo ? `<aside class="demo-banner" aria-label="Demo controls"><strong>Demo — sample data, nothing is saved</strong><span>Try a completed example without touching your own relationship log.</span><button id="reset-demo" type="button">Reset demo</button><a class="start-real" href="/">Start for real</a></aside>` : ''}
     <section class="workspace" aria-labelledby="workspace-title">
       <div class="section-heading"><div><p class="eyebrow">Route desk</p><h2 id="workspace-title">Prepare a package</h2></div><span class="status-chip" id="license-badge"></span></div>
       <ol class="route-steps" aria-label="Package steps"><li><span>1</span>Invoice PDF</li><li><span>2</span>Relationship</li><li><span>3</span>Download</li></ol>
@@ -181,10 +185,10 @@ async function renderWorkspace(): Promise<void> {
     </section>
 
     <section class="license-panel" aria-labelledby="license-title"><div><p class="eyebrow">${isDemo ? 'Sample route' : 'One-time trail pass'}</p><h2 id="license-title">${isDemo ? 'See the complete workflow.' : 'Keep every route open.'}</h2><p>${isDemo ? 'The sample invoice and relationship log are separate from your own data. Start for real when you are ready to use an invoice.' : `Three packages are free. Pay ${esc(LICENSE_PRICE)} once for unlimited packages and relationship recall on this device—or restore your license anywhere.`}</p><p class="license-notice" id="license-notice" aria-live="polite"></p></div>
-      <div class="license-actions">${isDemo ? '<a class="primary link-button" href="/">Start for real</a>' : `<a class="primary link-button" href="${BUY_URL}">Buy the one-time unlock</a><details><summary>Have a license?</summary><form id="restore-form"><label for="license-token">Paste license token</label><div class="inline-field"><input id="license-token" autocomplete="off" required><button type="submit" aria-label="Verify pasted license token">Verify license</button></div></form></details>`}</div>
+      <div class="license-actions">${isDemo ? '<a class="primary link-button start-real" href="/">Start for real</a>' : `<a class="primary link-button" href="${BUY_URL}">Buy the one-time unlock</a><details><summary>Have a license?</summary><form id="restore-form"><label for="license-token">Paste license token</label><div class="inline-field"><input id="license-token" autocomplete="off" required><button type="submit" aria-label="Verify pasted license token">Verify license</button></div></form></details>`}</div>
     </section>
 
-    <section class="records" id="records" aria-labelledby="records-title"><div class="section-heading"><div><p class="eyebrow">Local field book</p><h2 id="records-title">Relationship log</h2></div><div class="record-actions"><button id="export-csv" type="button">Export CSV</button><button id="backup-json" type="button">Backup JSON</button><label class="button-label" for="import-json">Import JSON</label><input id="import-json" class="sr-only" type="file" accept="application/json,.json"></div></div><div id="record-list">${recordRows(records)}</div></section>
+    <section class="records" id="records" aria-labelledby="records-title"><div class="section-heading"><div><p class="eyebrow">Local field book</p><h2 id="records-title">Relationship log</h2></div><div class="record-actions"><button id="export-csv" type="button">Export CSV</button><button id="backup-json" type="button">Backup JSON</button><label class="button-label">Import JSON<input id="import-json" class="sr-only" type="file" accept="application/json,.json"></label></div></div><div id="record-list">${recordRows(records)}</div></section>
   </main>`);
 
   let selectedFile: File | null = null;
@@ -224,6 +228,18 @@ async function renderWorkspace(): Promise<void> {
     await renderWorkspace();
     toast('Demo reset to its sample route.');
   });
+
+  document.querySelectorAll<HTMLAnchorElement>('.start-real').forEach((link) => link.addEventListener('click', async (event) => {
+    event.preventDefault();
+    try {
+      await deleteCurrentDatabase();
+      localStorage.removeItem(usageKey);
+      sessionStorage.setItem(ROUTE_FOCUS_KEY, '1');
+      location.assign(link.href);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Demo data could not be discarded. Try again.', 'error');
+    }
+  }));
 
   const form = document.querySelector<HTMLFormElement>('#package-form');
   form?.addEventListener('submit', async (event) => {
@@ -314,8 +330,33 @@ async function renderWorkspace(): Promise<void> {
 }
 
 export async function startApp(): Promise<void> {
+  document.querySelector<HTMLAnchorElement>('.skip-link')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    const main = document.querySelector<HTMLElement>('#main');
+    if (!main) return;
+    history.replaceState(history.state, '', `${location.pathname}${location.search}#main`);
+    main.focus();
+    main.scrollIntoView();
+  });
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented) return;
+    const anchor = (event.target as Element).closest<HTMLAnchorElement>('a[href]');
+    if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
+    const destination = new URL(anchor.href, location.href);
+    if (destination.origin === location.origin && destination.pathname !== location.pathname) {
+      sessionStorage.setItem(ROUTE_FOCUS_KEY, '1');
+    }
+  });
   if (location.pathname === '/privacy' || location.pathname === '/privacy/') renderLegal('privacy');
   else if (location.pathname === '/terms' || location.pathname === '/terms/') renderLegal('terms');
   else if (location.pathname === '/' || location.pathname === '/demo' || location.pathname === '/demo/') await renderWorkspace();
   else renderNotFound();
+  const heading = document.querySelector<HTMLElement>('h1');
+  if (heading) heading.tabIndex = -1;
+  const announcer = document.querySelector<HTMLElement>('#route-announcer');
+  if (announcer && heading) announcer.textContent = heading.textContent ?? document.title;
+  if (sessionStorage.getItem(ROUTE_FOCUS_KEY) === '1' && heading) {
+    sessionStorage.removeItem(ROUTE_FOCUS_KEY);
+    requestAnimationFrame(() => heading.focus());
+  }
 }

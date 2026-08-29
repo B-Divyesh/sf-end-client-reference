@@ -12,5 +12,8 @@ describe('static-host release policy', () => {
     expect(config.globalHeaders['Content-Security-Policy']).toContain('https://api.sociobot.in');
     expect(config.routes.find((route) => route.route === '/assets/*')?.headers?.['Cache-Control']).toContain('immutable');
     expect(config.responseOverrides['404']).toEqual({ rewrite: '/404.html', statusCode: 404 });
+    const routeBuilder = await readFile('scripts/copy-routes.mjs', 'utf8');
+    expect(routeBuilder).toContain("new URL('../dist/index.html'");
+    expect(routeBuilder).toContain("new URL('../dist/404.html'");
   });
 });

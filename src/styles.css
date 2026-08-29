@@ -112,7 +112,7 @@ input:user-invalid { border-color: var(--danger); }
 .link-button { display: inline-flex; align-items: center; justify-content: center; padding: 11px 18px; border: 1px solid var(--sheet); background: var(--sheet); color: var(--forest); font-weight: 800; text-align: center; text-decoration: none; }
 .link-button:hover { color: var(--sheet); background: transparent; }
 details { border-top: 1px solid rgb(255 255 255 / 35%); }
-summary { display: flex; align-items: center; cursor: pointer; font-weight: 750; }
+summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 750; }
 details form { padding: 4px 0 10px; }
 details label { color: white; font-size: 14px; }
 .inline-field { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
@@ -122,6 +122,7 @@ details label { color: white; font-size: 14px; }
 .records { scroll-margin-top: 20px; }
 .record-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .button-label { display: inline-flex; align-items: center; padding: 9px 15px; border: 1px solid var(--forest); border-radius: 5px; color: var(--forest); cursor: pointer; }
+.button-label:focus-within { outline: 3px solid var(--coral); outline-offset: 3px; }
 .table-scroll { overflow-x: auto; border: 1px solid var(--moss); background: var(--sheet); }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { padding: 15px 16px; border-bottom: 1px solid #d8ded4; text-align: left; vertical-align: top; }
@@ -139,7 +140,9 @@ tbody tr:last-child td { border-bottom: 0; }
 .legal p { max-width: 68ch; color: var(--muted); font-size: 17px; line-height: 1.65; }
 footer { max-width: 1120px; margin: 0 auto; padding: 32px 0 max(32px, env(safe-area-inset-bottom)); border-top: 1px solid var(--moss); display: flex; justify-content: space-between; gap: 24px; color: var(--muted); font-size: 14px; }
 footer p { margin: 0; }
-footer a + a { margin-left: 14px; }
+footer p:last-child { display: flex; align-items: center; flex-wrap: wrap; gap: 0 14px; }
+footer a { display: inline-flex; align-items: center; min-height: 44px; }
+footer p span { flex-basis: 100%; }
 .toast { position: fixed; z-index: 10; right: 24px; bottom: max(24px, env(safe-area-inset-bottom)); max-width: 390px; padding: 14px 18px; border-left: 4px solid var(--coral); color: white; background: var(--ink); box-shadow: var(--shadow); animation: toast-in 220ms ease-out; }
 .toast[data-tone="error"] { border-color: #ffad9c; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(12px); } }

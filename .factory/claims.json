@@ -1,10 +1,10 @@
 [
   {
     "id": "demo-isolated",
-    "claim": "The sample keeps its data separate from your relationship log",
+    "claim": "Demo data stays separate and is discarded when you start for real",
     "where": "Demo banner",
     "test": "npm test -- --grep @claim:demo-isolated",
-    "sandbox": "fresh browser context; /demo; inspect the completed sample route and reset it"
+    "sandbox": "fresh browser context; seed real data; /demo; generate a distinct sample record; start for real; assert real data is untouched, demo database and counter are deleted, and a new demo contains only its seed"
   },
   {
     "id": "original-invoice-intact",
@@ -53,7 +53,21 @@
     "claim": "A $19 one-time purchase unlocks unlimited packages",
     "where": "License panel, README",
     "test": "npm test -- --grep @claim:one-time-unlock",
-    "sandbox": "fresh browser context; returned-license fixture; assert unlock state and public production checkout URL"
+    "sandbox": "fresh browser context at the free limit; returned-license fixture; generate another package and assert the public production checkout URL"
+  },
+  {
+    "id": "pdf-size-limit",
+    "claim": "Accepts invoice PDFs up to 25 MB",
+    "where": "Invoice file control",
+    "test": "npm test -- --grep @claim:pdf-size-limit",
+    "sandbox": "fresh browser context; generate with an exact 25 MiB valid PDF, then assert a 25 MiB plus one byte PDF is rejected"
+  },
+  {
+    "id": "three-free-packages",
+    "claim": "Three packages are free",
+    "where": "License panel, README",
+    "test": "npm test -- --grep @claim:three-free-packages",
+    "sandbox": "fresh browser context; ordinary workspace; generate three downloads and assert the fourth attempt is blocked at the boundary"
   },
   {
     "id": "exact-relationship-text",

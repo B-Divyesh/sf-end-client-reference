@@ -128,9 +128,9 @@ export async function buildInvoicePackage(source: ArrayBuffer, details: PackageD
   try { sourceDocument = await PDFDocument.load(source); }
   catch (error) {
     if (error instanceof Error && error.message.toLowerCase().includes('encrypt')) {
-      throw new Error('Password-protected PDFs are not supported. Save an unlocked copy and try again.');
+      throw new Error('Password-protected PDFs are not supported. Save an unlocked copy and try again.', { cause: error });
     }
-    throw new Error('That file could not be read as a PDF. Choose the original invoice PDF and try again.');
+    throw new Error('That file could not be read as a PDF. Choose the original invoice PDF and try again.', { cause: error });
   }
   if (sourceDocument.isEncrypted) throw new Error('Password-protected PDFs are not supported. Save an unlocked copy and try again.');
   const output = await PDFDocument.create();
