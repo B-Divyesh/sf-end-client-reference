@@ -1,116 +1,123 @@
-# Performed For — verification handoff
-
-## Current release decision — FAIL
-
-Independent verification 4 tested candidate `f099ba0077e55598b1ed7c55f7d987f259384dab` and <https://end-client-reference.sociobot.in> on 2026-08-29. **Do not release this candidate.** The live deployment matches the candidate product build; this is not a deployment-only failure.
-
-Release blockers:
-
-1. Import JSON accepts wrong-typed records into IndexedDB before rendering fails. On reload, the bad record produces a console error and replaces the workspace with an error-only screen. Recovery requires clearing all browser data, including good records and the saved license.
-2. Public JSON backup/import, record deletion, and paid relationship-recall promises have no complete entries and observable tagged tests in `.factory/claims.json`.
-3. A `%PDF-`-prefixed malformed file exposes `Cannot read properties of undefined (reading 'Pages')` instead of a plain recovery instruction.
-
-The first-read gate passes. After `npm ci`, all 11 registered claim commands pass independently. Audit, lint, typecheck, production build, 5 unit tests, 19 local Chromium tests, and 19 live Chromium tests pass. The live PWA works offline, updates its service-worker cache correctly, has no serious/critical axe findings, makes only same-origin GETs during sample generation, and matches all 20 candidate build files byte for byte. The billing API allows 30 verification requests per client window; request 31 returned 429 with `Retry-After: 4`. Lighthouse mobile scored 96/100/100/100.
-
-Full evidence and reproduction steps are in [verification-4.md](verification-4.md). No product code was modified during verification.
-
----
-
-## Previous builder handoff (historical)
+# Performed For — repair handoff
 
 ## Outcome
 
-Repaired the release blockers documented in verifier report commit `6ad5b2477426274ad556c5dd942600636e52f213` and the controller's later offline evidence for candidate `4bf3c096e13a490e28a39bfec18b1f99ce14ac90`. The final product revision is `80958f1c08603a5686c701ed0d30500849bf2318`.
+Release-blocking findings from independent verifier report commit `b76105fcd12de910a3160d9854446a27222f91bd`, against candidate `f099ba0077e55598b1ed7c55f7d987f259384dab`, are repaired.
 
-The original `pwa-offline` artifact and static deployment class are unchanged. The researched brief, local PDF workflow, isolated sample, exact relationship data, free tier, license flow, export/import behavior, privacy posture, and topographic visual system remain intact.
+- Repair commit: `7508adc0d119e1478b03c12dce7821e7b696b958`
+- Deployment: <https://end-client-reference.sociobot.in>
+- Azure Static Web Apps deployment: `66a81bb1-6573-431e-87fa-c27bb99cc0f8` in `centralus`
+- Deployed build identity: `v1.0.0 · build 92118097247e`
+- Active service-worker cache: `performed-for-1883c0985441`
+- Artifact remains a static `pwa-offline`; the researched brief, local PDF workflow, free/paid boundary, privacy model, demo isolation, and topographic visual system are unchanged.
 
-## Offline failure reproduced and repaired
+No release-blocking gap remains.
 
-Before changing code, a Vite development server was started on port 4173 and the declared claim command was run:
+## Verifier findings repaired
 
-```sh
-npm run dev -- --host 127.0.0.1 --port 4173
-npm test -- --grep @claim:offline-reload
-```
+### Typed backup poisoning and persistent crash
 
-Because `playwright.config.ts` had `reuseExistingServer: true`, Playwright silently used the development server. The product registers its service worker only in production, so the test failed after 30 seconds at `navigator.serviceWorker.ready`. This reproduced the controller's timeout and identified the root cause: the test did not guarantee a production PWA server.
+- Added one schema boundary in `src/records.ts`. Every record field must have the expected type, required text cannot be blank, field lengths match the UI, timestamps are strict UTC values, and every persisted property is copied into a known safe shape.
+- Import now requires backup version `1`, a valid export timestamp, and a fully valid record array before IndexedDB is opened for writing. Unsupported versions and a single bad record reject the whole import.
+- `src/db.ts` defensively validates direct writes and complete import batches. The IndexedDB import uses one read-write transaction.
+- Existing malformed records are filtered before sorting or rendering, so they cannot crash the workspace. The relationship log reports the skipped count and offers **Remove only unreadable records**.
+- Recovery deletes only rejected entries. Valid records, the generation count, and the saved license remain unchanged.
+- Regression coverage proves a mixed valid/wrong-typed import writes nothing, version `2` writes nothing, reload stays usable with no console error, an already-poisoned database keeps a valid row visible, selective cleanup removes only the poison row, and the saved license survives.
 
-The repair:
+### Missing public claim coverage
 
-- Playwright now refuses to reuse a server on 4173. Its default run always performs a fresh production build and starts `vite preview`.
-- The offline claim has its own fresh 390 × 844 browser context. It awaits `navigator.serviceWorker.ready`, then awaits `controllerchange` when control is not yet present.
-- The claim asserts an activated `/sw.js` controller and a versioned cache containing production JavaScript. It then disables networking, completes a 200 offline reload, restores the demo sample, generates a package, and parses the downloaded two-page PDF. No timeout is suppressed or caught.
-- Production service-worker registration begins when the module runs instead of depending on a later `load` listener.
-- A second integration test serves a changed worker version, calls `registration.update()`, proves old-cache replacement, and verifies the visible update notice.
-- `PLAYWRIGHT_BASE_URL` can point the same browser checks at the deployed artifact; the default remains the required fresh local production preview.
+`.factory/claims.json` now contains 15 claims. Added one exact tagged browser test for each omitted promise:
 
-The exact claim command passes in 6.8 seconds on the final tree. The same test also passes in the final live-configured suite.
+- `@claim:json-backup` downloads and parses the complete sample version `1` backup.
+- `@claim:json-import` imports a complete backup and proves the row remains after reload.
+- `@claim:record-deletion` deletes one of two rows and proves the other remains after reload.
+- `@claim:relationship-recall` uses a fixture-verified license, generates a relationship, reloads, proves both paid client datalists retained it, and uses those recalled values for another package.
 
-## Verifier findings and regression coverage
+The copy audit and README map these promises to their claim IDs. Every one of the 15 literal commands in `.factory/claims.json` passed separately.
 
-- Demo disposal and isolation: the test seeds real data, creates distinct demo data, exits, and proves the real record remains while the demo database, counter, and added record are removed.
-- Claim coverage: all 11 public claims are registered. A unit guard requires exactly one browser-test tag per claim across every end-to-end spec. Each declared command passed independently on the final tree.
-- Invoice integrity: every original PDF page content stream is SHA-256 compared after merge.
-- Free and paid boundaries: three actual downloads succeed, the fourth is blocked, and a fixture-verified license generates beyond that limit.
-- Keyboard and focus: Import JSON has a visible focus treatment; the skip link focuses `main`; route changes focus and announce the new `h1`.
-- Touch and responsive behavior: license and footer targets are at least 44 px at 390 px. A new 320 px regression test found and repaired header overflow by dropping the secondary relationship-log navigation link at that narrow breakpoint; the workspace link remains available.
-- Site structure: route-specific metadata, shared-shell 404, footer version/build identity, and direct legal routes remain covered.
-- Accessibility: axe reports no serious or critical findings on `/`, `/demo`, `/privacy`, `/terms`, or the 404. Reduced-motion durations are 0.01 ms, and the final live page has `scrollWidth == clientWidth == 320`.
+### Internal malformed-PDF error
+
+- PDF loading, page-tree inspection, copying, and saving now share one error-normalization boundary.
+- A `%PDF-`-prefixed file with no valid page tree displays: **“That file could not be read as a PDF. Choose the original invoice PDF and try again.”**
+- The regression replaces that file with a valid PDF, downloads the package without reloading, and proves the error clears.
+- The existing password-protected PDF instruction remains distinct.
 
 ## Clean local verification — 2026-08-29
 
 ```text
-npm ci                              PASS — 143 packages; 0 vulnerabilities
+npm ci                              PASS — 143 packages installed; 0 vulnerabilities
 npm audit --audit-level=high        PASS — 0 vulnerabilities
-npm run lint                        PASS — ESLint; 0 warnings/errors
 npm run typecheck                   PASS — TypeScript; 0 errors
-npm test                            PASS — 5 Vitest + 19 Chromium tests
-all 11 claims.json commands         PASS — each selected its one tagged test
-npm run build                       PASS — production dist/ generated
+npm run lint                        PASS — ESLint; 0 warnings/errors
+npm test                            PASS — 8 Vitest tests + 26 Chromium tests
+all 15 claims.json commands         PASS — each selected its exact tagged test
+npm run build                       PASS — dist/index.html generated
+git diff --check                    PASS
 ```
 
-Production output is `dist/` with `dist/index.html` at its root. Initial JavaScript is 11.08 KB gzip, CSS is 3.66 KB gzip, and the on-demand PDF engine is 175.81 KB gzip. There is no font payload. The static PWA has no package/consumer compatibility surface.
+Production output:
 
-Run the same release checks with:
+- Initial app JavaScript: 33.64 KB raw / 11.90 KB gzip.
+- CSS: 13.42 KB raw / 3.70 KB gzip.
+- Lazy PDF engine: 420.56 KB raw / 175.81 KB gzip.
+- Mobile hero: 42.14 KB. No font payload.
+- Lighthouse 13.0.1 mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; FCP 0.9 s, LCP 1.2 s, TBT 0 ms, CLS 0, total transfer 69 KiB.
+
+Browser and accessibility evidence:
+
+- Desktop and 390 × 844 screenshots were reviewed. The first CTA remains in the first mobile viewport, controls stack intentionally, and there is no horizontal overflow. The 320 px regression also passes.
+- Keyboard tests cover skip-link activation, visible focus on Import JSON, route focus/announcement, validation focus, and actionable controls. Touch targets remain at least 44 px.
+- Reduced-motion behavior, semantic routes, one `h1`, heading/landmark structure, labels, image alternatives, and accessible names pass.
+- `verify-url.sh` passed `/`, `/demo`, `/privacy`, and `/terms` locally with zero console/page errors.
+- Axe CLI 4.10.3 reported 0 violations on all four routes. Playwright axe reported no serious or critical issues, including the 404 route.
+
+Privacy and PWA evidence:
+
+- The full demo generation request log contains only same-origin GET requests. No analytics, document uploads, third-party scripts, or remote fonts occur.
+- A fresh 390 px context acquired the production worker, went offline, reloaded `/demo` with status 200, and generated/parsed the two-page sample package.
+- The changed-worker test replaces the old cache and announces the available update.
+- Demo and ordinary IndexedDB/localStorage namespaces remain isolated; leaving demo deletes only demo data.
+
+## Deployment and live verification
+
+Deployment used the work-order static configuration:
+
+```sh
+npm run build
+/opt/fleet/lib/deploy-static.sh end-client-reference /work/repo/dist
+```
+
+Live results:
+
+- `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npx playwright test`: 26/26 passed. The update-replacement case uses its intended isolated local worker server; the remaining cases exercise the deployed origin.
+- `verify-url.sh` passed `/`, `/demo`, `/privacy`, and `/terms` in 837–1095 ms. Each had the correct title, `lang=en`, one `h1`, a `main`, complete image alternatives, named buttons, and no console/page error.
+- Axe CLI found 0 violations on those four live routes.
+- `/`, `/demo`, `/privacy`, `/terms`, `robots.txt`, `sitemap.xml`, the manifest, and `sw.js` return 200. An unknown route returns the product 404 with HTTP 404.
+- All 20 deployable files, excluding source maps and host-only configuration, match local `dist/` byte for byte.
+- Response policy includes CSP with `frame-ancestors 'none'`, HSTS, `nosniff`, strict-origin referrer policy, and a restrictive permissions policy. HTML is short-cached, hashed assets are one-year immutable, and `sw.js` is `no-cache`.
+- The manifest parses with standalone display, a versioned start URL, 192 px, 512 px, and maskable icons.
+- The production buy endpoint returns 303 to Dodo. The hosted checkout returns 200 and identifies **Performed For** at **$19.00**.
+- SHA-256: `dist/index.html` is `9bba2752871e09bb5c2bcc8bdc9aae62298b456d7668866ecc6275323fee82c0`; `dist/sw.js` is `94acd1c17145ecc3c8036dbcfeaf25536b2e9798c4e3233454942b5c122ac799`; the manifest is `6fe40c1fbb1e81c8cef26fb125509c13b811f651d6c3a236111c79d019866526`.
+
+## Run and verify
 
 ```sh
 npm ci
 npm audit --audit-level=high
-npm run lint
 npm run typecheck
+npm run lint
 npm test
 npm run build
-```
-
-Run browser checks against the deployed site with:
-
-```sh
 PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npx playwright test
 ```
 
-## Deployment and live evidence
-
-Repair commits `e4ec708bebcdbae87fc280717a6543d39cb692b2` and `80958f1c08603a5686c701ed0d30500849bf2318` were pushed to `origin/main`. The final artifact was rebuilt from `80958f1` and deployed with:
+Run any public claim exactly as declared, for example:
 
 ```sh
-/opt/fleet/lib/deploy-static.sh end-client-reference /work/repo/dist
+npm test -- --grep @claim:json-import
+npm test -- --grep @claim:relationship-recall
 ```
 
-Azure Static Web Apps deployment `33bf1b42-c9f5-448a-b7fd-c600f2936449` succeeded in `centralus`. The default host is `proud-bush-093b04410.7.azurestaticapps.net`; the ready managed-TLS custom domain is <https://end-client-reference.sociobot.in>.
+## Known limitations
 
-Final live evidence:
-
-- The full live-configured Playwright run passed 19 tests. Eighteen exercised the deployed origin; the worker-version replacement test used its isolated local update server.
-- The offline claim used a fresh live context, acquired the production service-worker controller, reloaded with networking disabled, and generated and parsed the sample PDF.
-- `verify-url.sh` passed `/` in 592 ms and `/demo` in 926 ms. Both had no console or page errors, correct title and language, one `h1`, a `main`, complete image alternatives, and named buttons.
-- `/`, `/demo`, `/privacy`, and `/terms` return 200. `/does-not-exist` returns the standard-shell 404 with status 404.
-- All 20 deployable files, excluding source maps and host-only configuration, match local `dist/` byte for byte.
-- Live footer identity is `v1.0.0 · build e0c299227741`; the active worker cache version is `performed-for-5ddeb918c847`.
-- SHA-256: `index.html` is `e2aef0de67f7aaacd4329076d1815210bc7244bc80c3e5c2e6215d2cb83b10db`; `sw.js` is `40d84844bba2d13191e25f4c08ee6efbbb546a8f02cf3bfb281cd846f013d159`; the manifest is `6fe40c1fbb1e81c8cef26fb125509c13b811f651d6c3a236111c79d019866526`.
-- Response policy includes HSTS, `nosniff`, strict-origin referrer policy, restrictive permissions policy, and CSP with `frame-ancestors 'none'` and only the Sociobot billing API added to `connect-src`. Hashed assets use one-year immutable caching; `sw.js` uses `no-cache`.
-- Lighthouse 13.4.1 mobile scored Performance 100, Accessibility 100, Best Practices 100, and SEO 100. FCP was 0.9 s, LCP 1.2 s, TBT 80 ms, CLS 0, and total transfer 69 KiB.
-- The production buy endpoint returns 303 to `checkout.dodopayments.com`; the hosted checkout returns 200.
-
-## Known gap
-
-No real purchase was made. Checkout reachability and the complete client unlock path are verified with the production hosted checkout plus a recorded valid-license response, without payment spend. No release-blocking product gap remains.
+No real purchase was made. Production checkout identity/reachability and the complete returned-license client path are verified without payment spend. This static PWA has no backend, sign-in flow, CLI, library package, or consumer compatibility surface, so backend concurrency, Entra identity, and package-consumer checks do not apply.
