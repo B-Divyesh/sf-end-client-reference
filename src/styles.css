@@ -190,15 +190,12 @@ footer p span { flex-basis: 100%; }
 @media (max-width: 430px) {
   .site-header, footer, .hero, .workspace, .license-panel, .records, .demo-banner { margin-inline: 12px; }
   .site-header nav { font-size: 16px; }
+  .site-header nav a:nth-child(3) { display: none; }
   .hero picture { height: 190px; }
   .trust-list { display: grid; }
   .route-steps { font-size: 16px; }
   .file-drop { padding-inline: 14px; }
   .record-actions { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 360px) {
-  .site-header nav a:nth-child(3) { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

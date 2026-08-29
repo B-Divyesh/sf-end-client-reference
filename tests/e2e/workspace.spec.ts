@@ -603,6 +603,7 @@ test('keeps computed copy at 16px or larger at desktop, 200%-zoom-equivalent 390
     });
     expect(undersized, `${width}px viewport has undersized visible copy`).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width}px viewport overflows`).toBeLessThanOrEqual(width);
+    if (width <= 390) await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeHidden();
   }
 });
 
