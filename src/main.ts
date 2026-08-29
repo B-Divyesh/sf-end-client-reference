@@ -14,6 +14,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type !== 'UPDATE_AVAILABLE') return;
     const toast = document.querySelector<HTMLElement>('#toast');
-    if (toast) { toast.textContent = 'A fresh map is ready. Reload when convenient.'; toast.hidden = false; }
+    if (toast) { toast.textContent = 'A newer version is ready. Reload when convenient.'; toast.hidden = false; }
   });
 }

@@ -110,7 +110,7 @@ test('installs a changed service worker and announces the update', async ({ brow
       if (!registration) throw new Error('No service-worker registration to update');
       await registration.update();
     });
-    await expect(page.locator('#toast')).toHaveText('A fresh map is ready. Reload when convenient.');
+    await expect(page.locator('#toast')).toHaveText('A newer version is ready. Reload when convenient.');
     await expect(page.locator('#toast')).toBeVisible();
     await expect.poll(() => page.evaluate(async () => (await caches.keys()).filter((name) => name.startsWith('performed-for-'))))
       .toEqual([expect.stringMatching(/-update$/)]);

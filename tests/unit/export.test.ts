@@ -13,6 +13,25 @@ describe('relationship exports', () => {
     expect(csv.startsWith('\uFEFF')).toBe(true);
   });
 
+  it('neutralizes every spreadsheet formula prefix in exported cells', () => {
+    const dangerousValues = [
+      '=HYPERLINK("https://example.invalid","open")',
+      '+SUM(1,1)',
+      '-2+3',
+      '@DANGEROUS',
+      '\t=HIDDEN',
+    ];
+    for (const value of dangerousValues) {
+      expect(csvCell(value)).toBe(`"'${value.replaceAll('"', '""')}"`);
+    }
+
+    const csv = recordsToCsv([{
+      id: 'formula-row', createdAt: '=NOW()', billingClient: '+SUM(1,1)', endClient: '-2+3',
+      reference: '@DANGEROUS', invoiceNumber: ' =TRIMMED', servicePeriod: '\t+HIDDEN', sourceFileName: '\uFEFF@invoice.pdf'
+    }]);
+    expect(csv).toContain('"\'=NOW()","\'+SUM(1,1)","\'-2+3","\'@DANGEROUS","\' =TRIMMED","\'\t+HIDDEN","\'\uFEFF@invoice.pdf"');
+  });
+
   it('creates filesystem-safe download names', () => {
     expect(safeFilename('INV 42 / North')).toBe('INV-42-North');
     expect(safeFilename('💼')).toBe('invoice');

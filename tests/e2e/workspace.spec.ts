@@ -105,7 +105,7 @@ test('announces validation and has no serious accessibility violations', async (
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
 });
 
-test('keeps every route axe-clean and announces an available update', async ({ page }) => {
+test('keeps every page axe-clean and announces an available update', async ({ page }) => {
   for (const route of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
     await page.goto(route);
     const results = await new AxeBuilder({ page: page as never }).analyze();
@@ -113,7 +113,7 @@ test('keeps every route axe-clean and announces an available update', async ({ p
   }
   await page.goto('/');
   await page.evaluate(() => navigator.serviceWorker.dispatchEvent(new MessageEvent('message', { data: { type: 'UPDATE_AVAILABLE' } })));
-  await expect(page.locator('#toast')).toHaveText('A fresh map is ready. Reload when convenient.');
+  await expect(page.locator('#toast')).toHaveText('A newer version is ready. Reload when convenient.');
   await expect(page.locator('#toast')).toBeVisible();
 });
 
@@ -130,12 +130,33 @@ test('legal routes are direct-loadable and semantic', async ({ page }) => {
 
 test('uses the standard shell and deployment document for unknown routes', async ({ page }) => {
   await page.goto('/not-a-product-route');
-  await expect(page.getByRole('heading', { name: 'This route is not on the map.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This page does not exist.' })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Performed For');
   await expect(page.locator('header')).toBeVisible();
   await expect(page.locator('nav')).toBeVisible();
   await expect(page.locator('footer')).toContainText(/v1\.0\.0 · build [a-f0-9]{12}/);
   expect(await readFile('dist/404.html', 'utf8')).toBe(await readFile('dist/index.html', 'utf8'));
+});
+
+test('uses literal product copy and puts the exact free and paid fact on the first screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.getByText('Three packages free · $19 once', { exact: true })).toBeVisible();
+  const sampleAction = await page.getByRole('link', { name: 'Try it with sample data' }).boundingBox();
+  expect(sampleAction?.y).toBeGreaterThanOrEqual(0);
+  expect((sampleAction?.y ?? 844) + (sampleAction?.height ?? 0)).toBeLessThanOrEqual(844);
+
+  for (const path of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
+    await page.goto(path);
+    const copy = await page.locator('body').innerText();
+    for (const banned of [
+      'Invoice route sheets', 'Route desk', 'Trail pass', 'trail pass', 'One-time trail pass',
+      'Keep every route open', 'Local field book', 'This route is not on the map',
+      'A fresh map is ready', 'Private by design', 'No routes logged yet',
+    ]) {
+      expect(copy, `${path} contains nonliteral copy: ${banned}`).not.toContain(banned);
+    }
+  }
 });
 
 test('captures and verifies a returned one-time license @claim:one-time-unlock', async ({ page }) => {
@@ -167,7 +188,7 @@ test('rejects whitespace-only relationship values before package generation', as
   await page.getByRole('button', { name: 'Generate package' }).click();
   await expect(page.locator('#form-error')).toContainText('spaces alone are not a client name');
   await expect(page.getByLabel('Billing client The company responsible for payment')).toBeFocused();
-  await expect(page.locator('#record-list')).toContainText('No routes logged yet');
+  await expect(page.locator('#record-list')).toContainText('No relationships logged yet');
 });
 
 test('rejects a wrong-typed or unsupported backup atomically and keeps the workspace usable', async ({ page }) => {
@@ -197,7 +218,7 @@ test('rejects a wrong-typed or unsupported backup atomically and keeps the works
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Add the end client to every invoice.' })).toBeVisible();
   await expect(page.locator('header')).toBeVisible();
-  await expect(page.locator('#record-list')).toContainText('No routes logged yet');
+  await expect(page.locator('#record-list')).toContainText('No relationships logged yet');
   expect(consoleErrors).toEqual([]);
 });
 
@@ -381,6 +402,50 @@ test('exports the sample relationship as CSV @claim:csv-export', async ({ page }
   expect(csv).toContain('"HAC-2026-014 · Autumn campaign"');
 });
 
+test('neutralizes every CSV formula prefix without changing the UI or PDF cover text', async ({ page }) => {
+  await page.goto('/');
+  const billingClient = '=HYPERLINK("https://example.invalid","open")';
+  const endClient = '+SUM(1,1)';
+  const reference = '@DANGEROUS';
+  const invoiceNumber = '-2+3';
+  await page.evaluate(() => {
+    const calls: string[] = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function patchedFillText(...args: Parameters<CanvasRenderingContext2D['fillText']>) {
+      calls.push(String(args[0]));
+      return original.apply(this, args);
+    };
+    (window as Window & { __formulaCoverText?: string[] }).__formulaCoverText = calls;
+  });
+  await page.locator('#invoice-file').setInputFiles({ name: '=invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  await page.getByLabel('Billing client The company responsible for payment').fill(billingClient);
+  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill(endClient);
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill(reference);
+  await page.getByLabel('Invoice number Optional').fill(invoiceNumber);
+  const packageDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await packageDownload;
+
+  await expect(page.getByRole('cell', { name: billingClient, exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: endClient, exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: reference, exact: true })).toBeVisible();
+  const coverText = await page.evaluate(() => (window as Window & { __formulaCoverText?: string[] }).__formulaCoverText?.join('') ?? '');
+  expect(coverText).toContain(billingClient);
+  expect(coverText).toContain(endClient);
+  expect(coverText).toContain(reference);
+  expect(coverText).toContain(invoiceNumber);
+
+  const csvDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export CSV' }).click();
+  const csv = await readFile((await (await csvDownload).path())!, 'utf8');
+  expect(csv).toContain('"\'=HYPERLINK(""https://example.invalid"",""open"")"');
+  expect(csv).toContain('"\'+SUM(1,1)"');
+  expect(csv).toContain('"\'@DANGEROUS"');
+  expect(csv).toContain('"\'-2+3"');
+  expect(csv).toContain('"\'=invoice.pdf"');
+  expect(csv).not.toMatch(/,"[=+@-]/u);
+});
+
 test('downloads a complete relationship JSON backup @claim:json-backup', async ({ page }) => {
   await page.goto('/demo');
   const downloadPromise = page.waitForEvent('download');
@@ -516,17 +581,52 @@ test('shows focus on Import JSON and moves focus after skip and route navigation
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
 });
 
-test('keeps 44px touch targets at 390px and prevents overflow at 320px', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  const summary = await page.getByText('Have a license?', { exact: true }).boundingBox();
-  const privacy = await page.getByRole('link', { name: 'Privacy' }).last().boundingBox();
-  const terms = await page.getByRole('link', { name: 'Terms' }).boundingBox();
-  expect(summary?.height).toBeGreaterThanOrEqual(44);
-  expect(privacy?.height).toBeGreaterThanOrEqual(44);
-  expect(terms?.height).toBeGreaterThanOrEqual(44);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+test('keeps computed copy at 16px or larger at desktop, 200%-zoom-equivalent 390px, and 320px', async ({ page }) => {
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: width === 1280 ? 900 : 844 });
+    await page.goto('/demo');
+    const undersized = await page.evaluate(() => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const failures: Array<{ text: string; fontSize: number; element: string }> = [];
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode;
+        if (!textNode.textContent?.trim()) continue;
+        const element = textNode.parentElement;
+        if (!element || element.closest('.sr-only')) continue;
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        if (style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0) continue;
+        const fontSize = Number.parseFloat(style.fontSize);
+        if (fontSize < 16) failures.push({ text: textNode.textContent.trim(), fontSize, element: element.tagName.toLowerCase() });
+      }
+      return failures;
+    });
+    expect(undersized, `${width}px viewport has undersized visible copy`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width}px viewport overflows`).toBeLessThanOrEqual(width);
+  }
+});
+
+test('keeps every visible mobile target at least 44 by 44px and reflows at 320px', async ({ page }) => {
+  for (const path of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(path);
+    if (path === '/') await page.getByText('Have a license?', { exact: true }).click();
+    const tooSmall = await page.evaluate(() => {
+      const selector = 'a[href], button, summary, input:not([type="file"]), label.file-drop, label.button-label, [tabindex="0"]';
+      return Array.from(document.querySelectorAll<HTMLElement>(selector)).flatMap((element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        const visible = style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+        if (!visible || (rect.width >= 44 && rect.height >= 44)) return [];
+        return [{ text: element.textContent?.trim() || element.getAttribute('aria-label') || element.tagName, width: rect.width, height: rect.height }];
+      });
+    });
+    expect(tooSmall, `${path} has a target smaller than 44px`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), `${path} overflows at 390px`).toBeLessThanOrEqual(390);
+  }
+
   await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto('/');
   await expect(page.getByRole('link', { name: 'Workspace' })).toBeVisible();
   await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);

@@ -27,7 +27,7 @@ All body text and interactive control combinations meet WCAG AA. Color is always
 
 - Display and labels: `Arial Narrow`, `Avenir Next Condensed`, `Roboto Condensed`, system sans-serif. The compact, uppercase-influenced rhythm recalls survey legends without loading a font.
 - Body and data: `Avenir Next`, `Segoe UI`, system sans-serif. Tabular figures are enabled for dates and records.
-- Scale: 14 / 16 / 20 / 28 / 44 px. Body never drops below 16 px. Reading measure is capped near 68 characters.
+- Scale: 16 / 20 / 28 / 44 px. Every visible copy role starts at 16 px; weight, spacing, and color preserve hierarchy. Reading measure is capped near 68 characters.
 
 System fonts are intentional: there are no remote requests, no font payload, and offline rendering stays predictable.
 
@@ -40,10 +40,11 @@ System fonts are intentional: there are no remote requests, no font payload, and
 
 ## Interaction grammar
 
-- A three-station route—Invoice, Relationship, Package—shows current position and completion in words and symbols.
-- Uploaded invoices become a named “source sheet.” Generated packages enter the local log like mapped waypoints.
-- Primary buttons use forest fill; coral marks the current location, keyboard focus, and document registration point.
+- A three-step workflow—Invoice PDF, Relationship, Download—shows the task sequence in words and symbols.
+- Uploaded invoices keep their source filename. Generated packages add metadata to the relationship log.
+- Primary buttons use forest fill; coral marks keyboard focus and the document registration point.
 - Destructive record deletion names the record in a native confirmation. Generated files remain user-controlled downloads.
+- The cartographic idea stays in the visual system; interface labels remain literal invoice, package, license, and relationship wording.
 
 ## Motion policy
 

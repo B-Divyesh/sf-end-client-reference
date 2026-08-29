@@ -5,8 +5,21 @@ export const CSV_HEADERS = [
   'Invoice number', 'Service period', 'Source PDF'
 ];
 
+function hasSpreadsheetFormulaPrefix(value: string): boolean {
+  for (const character of value) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    if (codePoint <= 0x20 || codePoint === 0xfeff) continue;
+    return '=+-@'.includes(character);
+  }
+  return false;
+}
+
 export function csvCell(value: string): string {
-  return `"${value.replaceAll('"', '""')}"`;
+  // Quoting protects CSV boundaries, but spreadsheet apps can still execute a
+  // leading formula. An apostrophe makes the cell literal without changing the
+  // saved relationship or the text drawn on the PDF cover.
+  const literalValue = hasSpreadsheetFormulaPrefix(value) ? `'${value}` : value;
+  return `"${literalValue.replaceAll('"', '""')}"`;
 }
 
 export function recordsToCsv(records: RelationshipRecord[]): string {
