@@ -13,10 +13,14 @@ import type { PackageDetails, RelationshipRecord } from './types';
 
 const FREE_LIMIT = 3;
 const USAGE_KEY = 'pf_generation_count';
-const isDemo = location.pathname === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
-const usageKey = isDemo ? `demo:${USAGE_KEY}` : USAGE_KEY;
-const ROUTE_FOCUS_KEY = 'pf_focus_route';
-setStorageNamespace(isDemo ? 'demo' : '');
+const inDemo = (): boolean => location.pathname === '/demo' || location.pathname === '/demo/' || new URLSearchParams(location.search).get('demo') === '1';
+const currentUsageKey = (): string => inDemo() ? `demo:${USAGE_KEY}` : USAGE_KEY;
+
+interface RouteState {
+  scrollX?: number;
+  scrollY?: number;
+  focusId?: string;
+}
 
 const DEMO_DETAILS: PackageDetails = {
   billingClient: 'Northline Studio Ltd.',
@@ -40,9 +44,9 @@ function shell(content: string): string {
       <img src="/icons/icon.svg" width="44" height="44" alt="" />
       <span><strong>Performed For</strong><small>Invoice cover sheets</small></span>
     </a>
-    <nav aria-label="Primary"><a href="/">Workspace</a><a href="/demo">Try sample</a><a href="/#records">Relationship log</a></nav>
+    <nav aria-label="Primary"><a id="nav-workspace" href="/">Workspace</a><a id="nav-demo" href="/demo">Try sample</a><a id="nav-records" href="/#records">Relationship log</a><a id="nav-privacy" href="/privacy">Privacy</a></nav>
   </header>${content}
-  <footer><p>Invoice files stay on your device. No analytics. No cloud document storage.</p><p><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>Built by Param Factory · v${__APP_VERSION__} · build ${__BUILD_ID__} · Illustration generated for this product.</span></p></footer>
+  <footer><p>Invoice files stay on your device. No analytics. No cloud document storage.</p><p><a id="footer-privacy" href="/privacy">Privacy</a><a id="footer-terms" href="/terms">Terms</a><span>Built by Param Factory · v${__APP_VERSION__} · build ${__BUILD_ID__} · Illustration generated for this product.</span></p></footer>
   <div class="sr-only" id="route-announcer" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>`;
 }
@@ -73,7 +77,7 @@ function renderLegal(kind: 'privacy' | 'terms'): void {
   const terms = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Terms notice · effective 28 August 2026</p><h1>Terms of use</h1>
     <p>Performed For creates a companion cover page from details you supply and combines it with an existing PDF. It does not issue invoices, provide accounting or legal advice, or change who owes payment.</p>
     <h2>Your responsibility</h2><p>You must have permission to process the invoice and client details you enter. Review every generated package before sending it. The billing client remains the payer; naming an end client never makes that end client liable.</p>
-    <h2>One-time unlock</h2><p>The ${esc(LICENSE_PRICE)} one-time purchase unlocks unlimited package generation and reusable relationship recall for this product. Sociobot/Dodo is the merchant of record. Checkout, receipts, taxes, and refunds are handled there. A refunded or revoked purchase deactivates its license. You can restore an active license on another device.</p>
+    <h2>One-time unlock</h2><p>The ${esc(LICENSE_PRICE)} one-time purchase unlocks unlimited package generation and saved client suggestions for this product. Sociobot/Dodo is the merchant of record. Checkout, receipts, taxes, and refunds are handled there. A refunded or revoked purchase deactivates its license. You can restore an active license on another device.</p>
     <h2>Availability and warranty</h2><p>The software is provided “as is” without warranties. Keep your own copies of invoices, downloads, and data backups. We may update the app for security or compatibility while preserving the core local-first workflow.</p>
     <h2>Contact</h2><p>Questions can be sent to <a href="mailto:support@sociobot.in">support@sociobot.in</a>.</p></main>`;
   app.innerHTML = shell(kind === 'privacy' ? privacy : terms);
@@ -108,7 +112,7 @@ function toast(message: string, tone: 'normal' | 'error' = 'normal'): void {
 function recordRows(records: RelationshipRecord[]): string {
   if (!records.length) return `<div class="empty-state"><span aria-hidden="true">◎</span><h3>No relationships logged yet</h3><p>Your first generated package will add its relationship here. Only metadata is saved—never the invoice PDF.</p></div>`;
   return `<div class="table-scroll" tabindex="0" aria-label="Scrollable relationship records"><table>
-    <thead><tr><th>Date</th><th>Billing client</th><th>Performed for</th><th>Reference</th><th aria-label="Actions"></th></tr></thead>
+    <thead><tr><th>Date</th><th>Billing client</th><th>End client</th><th>Reference</th><th>Actions</th></tr></thead>
     <tbody>${records.map((record) => `<tr>
       <td><time datetime="${record.createdAt}">${new Date(record.createdAt).toLocaleDateString()}</time></td>
       <td>${esc(record.billingClient)}</td><td>${esc(record.endClient)}</td><td>${esc(record.reference)}</td>
@@ -120,13 +124,16 @@ function updateLicenseUi(state: LicenseState): void {
   const badge = document.querySelector('#license-badge');
   const notice = document.querySelector('#license-notice');
   const generate = document.querySelector<HTMLButtonElement>('#generate');
-  if (badge) badge.textContent = state.unlocked ? 'License active · unlimited' : state.checking ? 'Checking license…' : `${Math.max(0, FREE_LIMIT - Number(localStorage.getItem(USAGE_KEY) || 0))} free packages left`;
+  if (badge) badge.textContent = state.unlocked ? 'License active · unlimited' : state.checking ? 'Checking license…' : `${Math.max(0, FREE_LIMIT - Number(localStorage.getItem(currentUsageKey()) || 0))} free packages left`;
   if (notice) notice.textContent = state.notice;
   if (generate) generate.dataset.unlocked = String(state.unlocked);
   document.body.dataset.unlocked = String(state.unlocked);
 }
 
 async function renderWorkspace(): Promise<void> {
+  const isDemo = inDemo();
+  const usageKey = currentUsageKey();
+  setStorageNamespace(isDemo ? 'demo' : '');
   if (!isDemo) captureReturnedLicense();
   setPageMetadata(
     isDemo ? 'Demo — Performed For' : 'Performed For — invoice relationship covers',
@@ -155,32 +162,35 @@ async function renderWorkspace(): Promise<void> {
   const suggestions = initialLicense.unlocked ? [...new Set(records.map((record) => record.billingClient))] : [];
   const endSuggestions = initialLicense.unlocked ? [...new Set(records.map((record) => record.endClient))] : [];
 
-  app.innerHTML = shell(`<main id="main" tabindex="-1">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-copy"><p class="eyebrow">Payer → beneficiary → engagement</p><h1 id="hero-title">Add the end client to every invoice.</h1>
+  const landingHero = `<section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy"><p class="eyebrow">Billing client → end client → project</p><h1 id="hero-title">Add the end client to every invoice.</h1>
         <p class="lede">For subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it.</p>
         <div class="hero-actions"><a class="primary link-button" href="/demo">Try it with sample data</a><a class="secondary-action" href="#workspace-title">Use your invoice</a></div>
         <p class="action-note">The sample opens a completed invoice example in an isolated demo.</p>
         <ul class="trust-list"><li>Runs on your device</li><li>Keeps the original invoice intact</li><li>Works offline after first visit</li><li>Three packages free · ${esc(LICENSE_PRICE)} once</li></ul>
       </div>
       <picture><source media="(max-width: 700px)" srcset="/art/topography-768.webp"><img src="/art/topography-1200.webp" srcset="/art/topography-768.webp 768w, /art/topography-1200.webp 1200w" sizes="(max-width: 700px) 100vw, 44vw" width="1200" height="800" alt="Layered paper illustration linking a billing client to an end client" fetchpriority="high" decoding="async"></picture>
-    </section>
+    </section>`;
+  const demoBanner = `<section class="demo-banner" aria-label="Demo controls"><div><h1>Try the sample invoice.</h1><strong>Demo — sample data, nothing is saved</strong><span>Northline Studio’s sample stays separate from your relationship log.</span></div><div class="demo-actions"><button id="reset-demo" type="button">Reset demo</button><a class="start-real" href="/">Start for real</a></div></section>`;
+  const demoSnapshot = isDemo ? `<div class="demo-snapshot" aria-label="Sample invoice details"><p><strong>Sample invoice</strong><span id="demo-file-name">${esc(DEMO_DETAILS.sourceFileName)} · ready</span></p><div class="sample-record" data-demo-sample-record><strong>Sample record</strong><span>Northline Studio → Harbour Arts Council</span></div></div>` : '';
 
-    ${isDemo ? `<aside class="demo-banner" aria-label="Demo controls"><strong>Demo — sample data, nothing is saved</strong><span>Try a completed example without touching your own relationship log.</span><button id="reset-demo" type="button">Reset demo</button><a class="start-real" href="/">Start for real</a></aside>` : ''}
-    <section class="workspace" aria-labelledby="workspace-title">
+  app.innerHTML = shell(`<main id="main" tabindex="-1">
+    ${isDemo ? demoBanner : landingHero}
+
+    <section class="workspace ${isDemo ? 'demo-workspace' : ''}" aria-labelledby="workspace-title">
       <div class="section-heading"><div><p class="eyebrow">Invoice package</p><h2 id="workspace-title">Prepare a package</h2></div><span class="status-chip" id="license-badge"></span></div>
-      <ol class="route-steps" aria-label="Package steps"><li><span>1</span>Invoice PDF</li><li><span>2</span>Relationship</li><li><span>3</span>Download</li></ol>
+      ${isDemo ? demoSnapshot : '<ol class="route-steps" aria-label="Package steps"><li><span>1</span>Invoice PDF</li><li><span>2</span>Relationship</li><li><span>3</span>Download</li></ol>'}
       ${storageError ? `<p class="notice error" role="alert">${storageError}</p>` : ''}
       <p class="notice offline-notice" id="offline-notice" hidden><strong>Offline.</strong> The workspace and your records still work; license checks will resume when connected.</p>
-      <form id="package-form" novalidate>
-        <fieldset><legend><span>01</span> Source invoice</legend>
+      <form id="package-form" class="${isDemo ? 'demo-form' : ''}" novalidate>
+        <fieldset class="source-fieldset"><legend><span>01</span> Source invoice</legend>
           <label class="file-drop" for="invoice-file"><strong>Choose the existing invoice PDF</strong><span id="file-help">PDF only · up to 25 MB · read locally, never retained</span><input id="invoice-file" name="invoice" type="file" accept="application/pdf,.pdf" aria-describedby="file-help file-error" ${isDemo ? '' : 'required'}><span class="file-name" id="file-name">No file selected</span></label>
           <p class="field-error" id="file-error" aria-live="polite"></p>
         </fieldset>
-        <fieldset><legend><span>02</span> Relationship</legend>
+        <fieldset class="relationship-fieldset"><legend><span>02</span> Relationship</legend>
           <div class="field-grid">
             <label>Billing client <small>The company responsible for payment</small><input name="billingClient" autocomplete="organization" list="billing-clients" maxlength="180" required value="${isDemo ? esc(DEMO_DETAILS.billingClient) : ''}"></label>
-            <label>Services performed for <small>The ultimate customer; not the payer</small><input name="endClient" autocomplete="off" list="end-clients" maxlength="180" required value="${isDemo ? esc(DEMO_DETAILS.endClient) : ''}"></label>
+            <label>End client <small>The customer receiving the work; not the payer</small><input name="endClient" autocomplete="off" list="end-clients" maxlength="180" required value="${isDemo ? esc(DEMO_DETAILS.endClient) : ''}"></label>
             <label class="full">Project / PO reference <small>Preserved exactly as entered</small><input name="reference" autocomplete="off" maxlength="220" required value="${isDemo ? esc(DEMO_DETAILS.reference) : ''}"></label>
             <label>Invoice number <small>Optional</small><input name="invoiceNumber" autocomplete="off" maxlength="100" value="${isDemo ? esc(DEMO_DETAILS.invoiceNumber) : ''}"></label>
             <label>Service period <small>Optional, in your preferred format</small><input name="servicePeriod" autocomplete="off" maxlength="100" value="${isDemo ? esc(DEMO_DETAILS.servicePeriod) : ''}"></label>
@@ -193,7 +203,9 @@ async function renderWorkspace(): Promise<void> {
       </form>
     </section>
 
-    <section class="license-panel" aria-labelledby="license-title"><div><p class="eyebrow">${isDemo ? 'Sample invoice' : 'One-time license'}</p><h2 id="license-title">${isDemo ? 'Try a complete invoice example.' : 'Generate unlimited packages.'}</h2><p>${isDemo ? 'The sample invoice and relationship log are separate from your own data. Start for real when you are ready to use an invoice.' : `Three packages are free. Pay ${esc(LICENSE_PRICE)} once for unlimited packages and relationship recall on this device—or restore your license anywhere.`}</p><p class="license-notice" id="license-notice" aria-live="polite"></p></div>
+    <section class="privacy-scope" aria-labelledby="privacy-scope-title"><p class="eyebrow">Privacy and limits</p><h2 id="privacy-scope-title">What stays on this device</h2><p>Invoice PDFs are read to make a download, then discarded. Only client relationship details are saved in your browser.</p><p>Performed For does not issue invoices or change who owes payment. The billing client remains the payer.</p></section>
+
+    <section class="license-panel" aria-labelledby="license-title"><div><p class="eyebrow">${isDemo ? 'Sample invoice' : 'One-time license'}</p><h2 id="license-title">${isDemo ? 'Try a complete invoice example.' : 'Generate unlimited packages.'}</h2><p>${isDemo ? 'The sample invoice and relationship log are separate from your own data. Start for real when you are ready to use an invoice.' : `Three packages are free. Pay ${esc(LICENSE_PRICE)} once for unlimited packages and saved client suggestions. Restore an active license on another device.`}</p><p class="license-notice" id="license-notice" aria-live="polite"></p></div>
       <div class="license-actions">${isDemo ? '<a class="primary link-button start-real" href="/">Start for real</a>' : `<a class="primary link-button" href="${BUY_URL}">Buy the one-time unlock</a><details><summary>Have a license?</summary><form id="restore-form"><label for="license-token">Paste license token</label><div class="inline-field"><input id="license-token" autocomplete="off" required><button type="submit" aria-label="Verify pasted license token">Verify license</button></div></form></details>`}</div>
     </section>
 
@@ -245,8 +257,7 @@ async function renderWorkspace(): Promise<void> {
     try {
       await deleteCurrentDatabase();
       localStorage.removeItem(usageKey);
-      sessionStorage.setItem(ROUTE_FOCUS_KEY, '1');
-      location.assign(link.href);
+      await navigate(new URL(link.href, location.href), link);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Demo data could not be discarded. Try again.', 'error');
     }
@@ -354,7 +365,50 @@ async function renderWorkspace(): Promise<void> {
   });
 }
 
+function controlId(control: HTMLElement): string {
+  if (!control.id) control.id = `route-control-${crypto.randomUUID()}`;
+  return control.id;
+}
+
+function saveRouteState(focusId?: string): void {
+  const state: RouteState = { ...(history.state ?? {}), scrollX: scrollX, scrollY: scrollY, focusId };
+  history.replaceState(state, '', `${location.pathname}${location.search}${location.hash}`);
+}
+
+async function renderRoute(options: { restore?: RouteState; focusHeading?: boolean } = {}): Promise<void> {
+  if (location.pathname === '/privacy' || location.pathname === '/privacy/') renderLegal('privacy');
+  else if (location.pathname === '/terms' || location.pathname === '/terms/') renderLegal('terms');
+  else if (location.pathname === '/' || location.pathname === '/demo' || location.pathname === '/demo/') await renderWorkspace();
+  else renderNotFound();
+  const heading = document.querySelector<HTMLElement>('h1');
+  if (heading) heading.tabIndex = -1;
+  const announcer = document.querySelector<HTMLElement>('#route-announcer');
+  if (announcer && heading) announcer.textContent = heading.textContent ?? document.title;
+  requestAnimationFrame(() => {
+    if (options.restore) {
+      scrollTo(options.restore.scrollX ?? 0, options.restore.scrollY ?? 0);
+      const control = options.restore.focusId ? document.getElementById(options.restore.focusId) : null;
+      (control ?? heading)?.focus({ preventScroll: true });
+    } else if (options.focusHeading) {
+      scrollTo(0, 0);
+      heading?.focus({ preventScroll: true });
+    }
+  });
+}
+
+async function navigate(destination: URL, trigger?: HTMLElement): Promise<void> {
+  const current = new URL(location.href);
+  if (destination.pathname === current.pathname && destination.search === current.search) {
+    if (destination.hash) document.querySelector(destination.hash)?.scrollIntoView();
+    return;
+  }
+  saveRouteState(trigger ? controlId(trigger) : undefined);
+  history.pushState({}, '', `${destination.pathname}${destination.search}${destination.hash}`);
+  await renderRoute({ focusHeading: true });
+}
+
 export async function startApp(): Promise<void> {
+  history.scrollRestoration = 'manual';
   document.querySelector<HTMLAnchorElement>('.skip-link')?.addEventListener('click', (event) => {
     event.preventDefault();
     const main = document.querySelector<HTMLElement>('#main');
@@ -369,19 +423,10 @@ export async function startApp(): Promise<void> {
     if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
     const destination = new URL(anchor.href, location.href);
     if (destination.origin === location.origin && destination.pathname !== location.pathname) {
-      sessionStorage.setItem(ROUTE_FOCUS_KEY, '1');
+      event.preventDefault();
+      void navigate(destination, anchor);
     }
   });
-  if (location.pathname === '/privacy' || location.pathname === '/privacy/') renderLegal('privacy');
-  else if (location.pathname === '/terms' || location.pathname === '/terms/') renderLegal('terms');
-  else if (location.pathname === '/' || location.pathname === '/demo' || location.pathname === '/demo/') await renderWorkspace();
-  else renderNotFound();
-  const heading = document.querySelector<HTMLElement>('h1');
-  if (heading) heading.tabIndex = -1;
-  const announcer = document.querySelector<HTMLElement>('#route-announcer');
-  if (announcer && heading) announcer.textContent = heading.textContent ?? document.title;
-  if (sessionStorage.getItem(ROUTE_FOCUS_KEY) === '1' && heading) {
-    sessionStorage.removeItem(ROUTE_FOCUS_KEY);
-    requestAnimationFrame(() => heading.focus());
-  }
+  addEventListener('popstate', () => { void renderRoute({ restore: history.state ?? {} }); });
+  await renderRoute();
 }

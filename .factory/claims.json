@@ -78,10 +78,52 @@
   },
   {
     "id": "relationship-recall",
-    "claim": "A $19 one-time purchase includes client relationship recall on this device",
+    "claim": "A $19 one-time purchase includes saved client suggestions on this device",
     "where": "License panel, terms, README",
     "test": "npm test -- --grep @claim:relationship-recall",
     "sandbox": "fresh browser context; fixture-verified license; generate a relationship; reload; assert both client datalists retain the values and use them for another generated package"
+  },
+  {
+    "id": "license-restore-anywhere",
+    "claim": "An active license can be restored on another device",
+    "where": "License panel, terms, README",
+    "test": "npm test -- --grep @claim:license-restore-anywhere",
+    "sandbox": "two fresh browser contexts; paste the same fixture-valid token in the second context, verify it, and generate past the free limit"
+  },
+  {
+    "id": "demo-reset",
+    "claim": "Reset demo restores the original sample",
+    "where": "Demo banner, README",
+    "test": "npm test -- --grep @claim:demo-reset",
+    "sandbox": "fresh browser context; /demo; change fields and generate a row; reset; assert the original filename, fields, single seed row, and unlimited demo counter"
+  },
+  {
+    "id": "invalid-record-recovery",
+    "claim": "Unreadable saved records can be removed without clearing valid records or the saved license",
+    "where": "Recovery notice, README",
+    "test": "npm test -- --grep @claim:invalid-record-recovery",
+    "sandbox": "fresh browser context; seed one valid and one malformed IndexedDB record plus a valid cached license; remove malformed entries and reload"
+  },
+  {
+    "id": "billing-api-only",
+    "claim": "Checkout and license verification use the Sociobot billing API",
+    "where": "README, terms",
+    "test": "npm test -- --grep @claim:billing-api-only",
+    "sandbox": "fresh browser context; fixture-verify a pasted token, inspect the checkout URL and captured request origin, and inspect built JavaScript for no payment-provider endpoint"
+  },
+  {
+    "id": "end-client-not-payer",
+    "claim": "The cover says the end client is not liable for payment",
+    "where": "Workspace, generated cover, README",
+    "test": "npm test -- --grep @claim:end-client-not-payer",
+    "sandbox": "fresh browser context; /demo; assert the workspace helper and captured cover-canvas text say the billing client is the payer and the end client is not liable"
+  },
+  {
+    "id": "no-third-party-runtime-assets",
+    "claim": "No third-party scripts or CDN fonts are used",
+    "where": "README",
+    "test": "npm test -- --grep @claim:no-third-party-runtime-assets",
+    "sandbox": "fresh browser context; load and generate in /demo while recording script, stylesheet, font, and image requests; assert each request is same-origin"
   },
   {
     "id": "pdf-size-limit",

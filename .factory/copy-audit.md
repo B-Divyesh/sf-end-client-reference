@@ -1,65 +1,42 @@
-# Copy audit — 2026-08-29 repair 5
+# Copy audit — polish 1
 
-## First screen
+Reviewed 2026-08-30. Counts treat hyphenated terms and prices as one word. No landing or README sentence exceeds 22 words. No banned plain-words terms appear.
 
-| Copy | Words | Result |
-| --- | ---: | --- |
-| Add the end client to every invoice. | 7 | Headline names the job. |
-| For subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it. | 17 | Names the audience and change. |
-| Try it with sample data | 5 | Primary action. |
-| Use your invoice | 3 | Names the real-data action. |
-| The sample opens a completed invoice example in an isolated demo. | 11 | States the result of the sample action. |
-| Runs on your device | 4 | Claim registered as `runs-on-device`. |
-| Keeps the original invoice intact | 5 | Claim registered as `original-invoice-intact`. |
-| Works offline after first visit | 5 | Claim registered as `offline-reload`. |
-| Three packages free · $19 once | 5 | Claims registered as `three-free-packages` and `one-time-unlock`. |
-
-The headline, audience sentence, sample action, action result, and price fact are visible in the first 390 × 844 viewport.
-
-## Workspace and purchase copy
+## Landing page
 
 | Copy | Words | Result |
 | --- | ---: | --- |
-| Invoice package | 2 | Literal section label. |
-| Prepare a package | 3 | Names the task. |
-| PDF only · up to 25 MB · read locally, never retained | 10 | Claims registered as `pdf-size-limit` and `no-cloud-document-storage`. |
-| The company responsible for payment | 5 | Defines billing client. |
-| The ultimate customer; not the payer | 6 | Defines end client without shifting liability. |
-| Preserved exactly as entered | 4 | Claim registered as `exact-relationship-text`. |
-| One cover page followed by every page of the original invoice. | 11 | Claim registered as `original-invoice-intact`. |
-| Three packages are free. | 4 | Claim registered as `three-free-packages`. |
-| Pay $19 once for unlimited packages and relationship recall on this device—or restore your license anywhere. | 16 | Claims registered as `one-time-unlock` and `relationship-recall`. |
-| Generate unlimited packages. | 3 | Literal purchase-section heading. |
-| Try a complete invoice example. | 5 | Literal demo-section heading. |
-| The sample invoice and relationship log are separate from your own data. | 12 | Explains demo isolation. |
-| Start for real when you are ready to use an invoice. | 11 | Explains the demo exit. |
-| No relationships logged yet | 4 | Names the empty state. |
-| Your first generated package will add its relationship here. | 9 | Explains the empty state. |
-| Only metadata is saved—never the invoice PDF. | 7 | Claim registered as `no-cloud-document-storage`. |
-| Invoice files stay on your device. | 6 | Claim registered as `no-cloud-document-storage`. |
-| No analytics. | 2 | Claim registered as `no-analytics`. |
-| No cloud document storage. | 4 | Claim registered as `no-cloud-document-storage`. |
+| Add the end client to every invoice. | 7 | Job headline |
+| For subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it. | 17 | Audience and outcome |
+| The sample opens a completed invoice example in an isolated demo. | 11 | Action result |
+| Runs on your device. | 4 | Registered claim |
+| Keeps the original invoice intact. | 5 | Registered claim |
+| Works offline after first visit. | 5 | Registered claim |
+| Three packages free · $19 once. | 5 | Registered claim |
+| What stays on this device. | 5 | Literal privacy heading |
+| Invoice PDFs are read to make a download, then discarded. | 10 | Privacy scope |
+| Only client relationship details are saved in your browser. | 9 | Privacy scope |
+| Performed For does not issue invoices or change who owes payment. | 11 | Product limit |
+| The billing client remains the payer. | 6 | Payment distinction |
 
-## Data control copy
+## README
 
 | Copy | Words | Result |
 | --- | ---: | --- |
-| Export CSV | 2 | Claim registered as `csv-export`. |
-| Backup JSON | 2 | Claim registered as `json-backup`. |
-| Import JSON | 2 | Claim registered as `json-import`. |
-| Delete individual entries in the relationship log. | 7 | Claim registered as `record-deletion`. |
-| Your valid records and saved license are unchanged. | 8 | Invalid-record recovery regression preserves both stores. |
-| Remove only unreadable records | 4 | Invalid-record recovery regression removes only rejected entries. |
-
-No landing-page sentence exceeds 22 words. The banned-word scan found no leverage, seamless, effortless, robust, powerful, intuitive, reimagine, supercharge, delightful, journey, ecosystem, or AI-powered language. The previous “route,” “map,” “trail pass,” and “field book” interface lore is gone. “Unlock” describes the literal paid license action.
+| Add an end-client cover to an existing invoice PDF. | 8 | Job statement |
+| It is for subcontractors and agencies that invoice a billing client but must name the end client and project. | 18 | Audience statement |
+| The demo banner can reset the original sample. | 8 | Registered claim |
+| Start for real discards the demo data. | 8 | Registered claim |
+| A $19 one-time license enables unlimited packages and saved client suggestions on this device. | 14 | Registered claim |
+| You can restore an active license on another device. | 10 | Registered claim |
 
 ## Terminology
 
 | Concept | One term used |
 | --- | --- |
-| Generated companion PDF | package |
-| Paying company | billing client |
-| Ultimate customer | end client |
-| Project identifier | project / PO reference |
-| Saved metadata list | relationship log |
-| Isolated sample area | demo |
+| Company responsible for payment | Billing client |
+| Customer receiving the work | End client |
+| Work identifier | Project / PO reference |
+| Generated file | Invoice package |
+| Stored non-PDF entries | Relationship log |
+| Sample-only workspace | Demo |

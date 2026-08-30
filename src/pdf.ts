@@ -120,7 +120,7 @@ async function coverPng(details: PackageDetails): Promise<Uint8Array> {
   context.font = '700 22px Arial, sans-serif';
   context.fillText('PAYMENT RESPONSIBILITY', 140, 1440);
   context.font = '25px Arial, sans-serif';
-  const note = 'This cover identifies the beneficiary of the services only. The billing client remains responsible for payment. This document does not make the end client liable for payment.';
+  const note = 'This cover identifies the end client only. The billing client remains responsible for payment. This document does not make the end client liable for payment.';
   drawWrapped(context, note, 140, 1490, 950, 36);
   context.fillStyle = '#52645F';
   context.font = '20px Arial, sans-serif';
@@ -148,7 +148,7 @@ export async function buildInvoicePackage(source: ArrayBuffer, details: PackageD
   try {
     const output = await PDFDocument.create();
     output.setTitle(`Invoice relationship — ${details.reference}`);
-    output.setSubject(`Services performed for ${details.endClient}; billed to ${details.billingClient}`);
+    output.setSubject(`End client ${details.endClient}; billed to ${details.billingClient}`);
     output.setProducer('Performed For — local-first PWA');
     const page = output.addPage([595.28, 841.89]);
     const image = await output.embedPng(cover);

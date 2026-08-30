@@ -80,7 +80,7 @@ test('generates a merged PDF and logs the exact relationship', async ({ page }) 
   page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await page.locator('#invoice-file').setInputFiles({ name: 'original-invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
   await page.getByLabel('Billing client The company responsible for payment').fill('Prime & Co.');
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('客户 Ω');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('客户 Ω');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('PO/42 · Phase A');
   await page.getByLabel('Invoice number Optional').fill('INV-007');
   const downloadPromise = page.waitForEvent('download');
@@ -141,10 +141,29 @@ test('uses the standard shell and deployment document for unknown routes', async
 test('uses literal product copy and puts the exact free and paid fact on the first screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await expect(page.getByText('Three packages free · $19 once', { exact: true })).toBeVisible();
-  const sampleAction = await page.getByRole('link', { name: 'Try it with sample data' }).boundingBox();
-  expect(sampleAction?.y).toBeGreaterThanOrEqual(0);
-  expect((sampleAction?.y ?? 844) + (sampleAction?.height ?? 0)).toBeLessThanOrEqual(844);
+  for (const item of [
+    page.getByRole('link', { name: 'Try it with sample data' }),
+    page.getByText('The sample opens a completed invoice example in an isolated demo.', { exact: true }),
+    page.getByText('Runs on your device', { exact: true }),
+    page.getByText('Works offline after first visit', { exact: true }),
+    page.getByText('Three packages free · $19 once', { exact: true }),
+  ]) {
+    const box = await item.boundingBox();
+    expect(box?.y).toBeGreaterThanOrEqual(0);
+    expect((box?.y ?? 844) + (box?.height ?? 0)).toBeLessThanOrEqual(844);
+  }
+
+  await page.goto('/demo');
+  for (const item of [
+    page.getByText('Demo — sample data, nothing is saved', { exact: true }),
+    page.locator('#demo-file-name'),
+    page.getByLabel('End client The customer receiving the work; not the payer'),
+    page.locator('[data-demo-sample-record]'),
+  ]) {
+    const box = await item.boundingBox();
+    expect(box?.y).toBeGreaterThanOrEqual(0);
+    expect((box?.y ?? 844) + (box?.height ?? 0)).toBeLessThanOrEqual(844);
+  }
 
   for (const path of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
     await page.goto(path);
@@ -159,6 +178,21 @@ test('uses literal product copy and puts the exact free and paid fact on the fir
   }
 });
 
+test('restores scroll position and the triggering control after Back navigation', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#records')).toBeAttached();
+  await page.locator('#records').evaluate((element) => scrollTo({ top: element.getBoundingClientRect().top + scrollY, behavior: 'instant' }));
+  const before = await page.evaluate(() => scrollY);
+  expect(before).toBeGreaterThan(100);
+  await page.locator('#nav-privacy').evaluate((element: HTMLAnchorElement) => element.click());
+  await expect(page).toHaveURL('/privacy');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before - 4);
+  await expect(page.locator('#nav-privacy')).toBeFocused();
+});
+
 test('captures and verifies a returned one-time license @claim:one-time-unlock', async ({ page }) => {
   await page.route('https://api.sociobot.in/api/v1/products/end-client-reference/verify**', (route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null })
@@ -171,7 +205,7 @@ test('captures and verifies a returned one-time license @claim:one-time-unlock',
   await expect(page.getByRole('link', { name: 'Buy the one-time unlock' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/end-client-reference/checkout');
   await page.locator('#invoice-file').setInputFiles({ name: 'licensed-invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
   await page.getByLabel('Billing client The company responsible for payment').fill('Licensed Prime');
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('Licensed End Client');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Licensed End Client');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('PAST-FREE-LIMIT');
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Generate package' }).click();
@@ -183,7 +217,7 @@ test('rejects whitespace-only relationship values before package generation', as
   await page.goto('/');
   await page.locator('#invoice-file').setInputFiles({ name: 'original-invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
   await page.getByLabel('Billing client The company responsible for payment').fill('   ');
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('  ');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('  ');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill(' ');
   await page.getByRole('button', { name: 'Generate package' }).click();
   await expect(page.locator('#form-error')).toContainText('spaces alone are not a client name');
@@ -222,7 +256,7 @@ test('rejects a wrong-typed or unsupported backup atomically and keeps the works
   expect(consoleErrors).toEqual([]);
 });
 
-test('skips and selectively removes an already-invalid stored record without clearing valid data', async ({ page }) => {
+test('skips and selectively removes an already-invalid stored record without clearing valid data @claim:invalid-record-recovery', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(async ({ valid, poison }) => {
     localStorage.setItem('sb_license:end-client-reference', 'keep-this-license');
@@ -286,7 +320,7 @@ test('draws every allowed relationship character on the cover @claim:exact-relat
     (window as Window & { __coverText?: string[] }).__coverText = calls;
   });
   await page.getByLabel('Billing client The company responsible for payment').fill(billing);
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill(endClient);
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill(endClient);
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill(reference);
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Generate package' }).click();
@@ -333,7 +367,7 @@ test('keeps demo data isolated and discards it on exit @claim:demo-isolated', as
   expect(await page.evaluate(() => localStorage.getItem('demo:pf_generation_count'))).toBeNull();
   expect(await page.evaluate(async () => (await indexedDB.databases()).map((database) => database.name))).not.toContain('demo:performed-for');
   await page.goto('/demo');
-  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('#record-list tbody tr')).toHaveCount(1);
   await expect(page.getByRole('cell', { name: 'Harbour Arts Council' })).toBeVisible();
   await expect(page.getByText('DISCARD-ME', { exact: true })).toHaveCount(0);
   await expect(page.getByText('REAL-ONLY', { exact: true })).toHaveCount(0);
@@ -344,7 +378,7 @@ test('keeps every original invoice content stream intact @claim:original-invoice
   const source = await detailedInvoiceBuffer();
   await page.locator('#invoice-file').setInputFiles({ name: 'two-page-invoice.pdf', mimeType: 'application/pdf', buffer: source });
   await page.getByLabel('Billing client The company responsible for payment').fill('Prime Office');
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('End Client Office');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('End Client Office');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('INTACT-42');
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Generate package' }).click();
@@ -364,7 +398,7 @@ test('accepts 25 MiB PDFs and rejects larger files @claim:pdf-size-limit', async
   source.copy(exactLimit);
   await page.locator('#invoice-file').setInputFiles({ name: 'exactly-25-mib.pdf', mimeType: 'application/pdf', buffer: exactLimit });
   await page.getByLabel('Billing client The company responsible for payment').fill('Boundary Prime');
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('Boundary End Client');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Boundary End Client');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('LIMIT-25');
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Generate package' }).click();
@@ -380,7 +414,7 @@ test('allows three free packages and blocks the fourth @claim:three-free-package
   await page.goto('/');
   await page.locator('#invoice-file').setInputFiles({ name: 'free-invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
   await page.getByLabel('Billing client The company responsible for payment').fill('Free Prime');
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('Free End Client');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Free End Client');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('FREE-BOUNDARY');
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const downloadPromise = page.waitForEvent('download');
@@ -419,7 +453,7 @@ test('neutralizes every CSV formula prefix without changing the UI or PDF cover 
   });
   await page.locator('#invoice-file').setInputFiles({ name: '=invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
   await page.getByLabel('Billing client The company responsible for payment').fill(billingClient);
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill(endClient);
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill(endClient);
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill(reference);
   await page.getByLabel('Invoice number Optional').fill(invoiceNumber);
   const packageDownload = page.waitForEvent('download');
@@ -505,7 +539,7 @@ test('recalls paid client relationships from datalists after reload @claim:relat
   await expect(page.locator('#license-badge')).toContainText('unlimited');
   await page.locator('#invoice-file').setInputFiles({ name: 'recall.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
   await page.getByLabel('Billing client The company responsible for payment').fill('Recall Prime');
-  await page.getByLabel('Services performed for The ultimate customer; not the payer').fill('Recall End Client');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Recall End Client');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('RECALL-1');
   const firstDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Generate package' }).click();
@@ -518,7 +552,7 @@ test('recalls paid client relationships from datalists after reload @claim:relat
   await expect(billingOption).toHaveCount(1);
   await expect(endClientOption).toHaveCount(1);
   const billing = page.getByLabel('Billing client The company responsible for payment');
-  const endClient = page.getByLabel('Services performed for The ultimate customer; not the payer');
+  const endClient = page.getByLabel('End client The customer receiving the work; not the payer');
   await expect(billing).toHaveAttribute('list', 'billing-clients');
   await expect(endClient).toHaveAttribute('list', 'end-clients');
   await billing.fill(await billingOption.getAttribute('value') ?? '');
@@ -577,7 +611,7 @@ test('shows focus on Import JSON and moves focus after skip and route navigation
   await page.locator('.skip-link').focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('main')).toBeFocused();
-  await page.getByRole('link', { name: 'Privacy' }).click();
+  await page.locator('#nav-privacy').click();
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
 });
 
@@ -631,4 +665,93 @@ test('keeps every visible mobile target at least 44 by 44px and reflows at 320px
   await expect(page.getByRole('link', { name: 'Workspace' })).toBeVisible();
   await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
+test('resets the demo to the original sample @claim:demo-reset', async ({ page }) => {
+  await page.goto('/demo');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Changed end client');
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('CHANGED-RECORD');
+  const generated = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await generated;
+  await expect(page.getByRole('cell', { name: 'CHANGED-RECORD', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(page.locator('#file-name')).toHaveText('northline-studio-invoice.pdf · sample invoice ready');
+  await expect(page.getByLabel('End client The customer receiving the work; not the payer')).toHaveValue('Harbour Arts Council');
+  await expect(page.locator('#record-list tbody tr')).toHaveCount(1);
+  await expect(page.getByRole('cell', { name: 'CHANGED-RECORD', exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('demo:pf_generation_count'))).toBeNull();
+});
+
+test('restores the same active license in a fresh browser context @claim:license-restore-anywhere', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await page.route('https://api.sociobot.in/api/v1/products/end-client-reference/verify**', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null }),
+    }));
+    await page.goto('/');
+    await page.evaluate(() => localStorage.setItem('pf_generation_count', '3'));
+    await page.getByText('Have a license?', { exact: true }).click();
+    await page.getByLabel('Paste license token').fill('active-license-on-second-device');
+    await page.getByRole('button', { name: 'Verify pasted license token' }).click();
+    await expect(page.locator('#license-badge')).toContainText('unlimited');
+    await page.locator('#invoice-file').setInputFiles({ name: 'restored.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+    await page.getByLabel('Billing client The company responsible for payment').fill('Restored billing client');
+    await page.getByLabel('End client The customer receiving the work; not the payer').fill('Restored end client');
+    await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('RESTORED-PAST-FREE');
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Generate package' }).click();
+    await download;
+  } finally { await context.close(); }
+});
+
+test('uses only the Sociobot billing API for checkout and verification @claim:billing-api-only', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', (request) => { if (request.url().includes('/verify')) requests.push(request.url()); });
+  await page.route('https://api.sociobot.in/api/v1/products/end-client-reference/verify**', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null }),
+  }));
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'Buy the one-time unlock' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/end-client-reference/checkout');
+  await page.getByText('Have a license?', { exact: true }).click();
+  await page.getByLabel('Paste license token').fill('billing-api-fixture');
+  await page.getByRole('button', { name: 'Verify pasted license token' }).click();
+  expect(requests).toEqual(['https://api.sociobot.in/api/v1/products/end-client-reference/verify?license=billing-api-fixture']);
+  const assets = await Promise.all((await (await import('node:fs/promises')).readdir('dist/assets')).filter((name) => name.endsWith('.js')).map((name) => readFile(`dist/assets/${name}`, 'utf8')));
+  expect(assets.join('\n')).not.toMatch(/stripe|paypal|braintree|checkout\.dodopayments/iu);
+});
+
+test('states that the end client is not the payer in the workspace and cover @claim:end-client-not-payer', async ({ page }) => {
+  await page.goto('/demo');
+  await expect(page.getByText('The customer receiving the work; not the payer', { exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    const calls: string[] = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function patchedFillText(...args: Parameters<CanvasRenderingContext2D['fillText']>) {
+      calls.push(String(args[0]));
+      return original.apply(this, args);
+    };
+    (window as Window & { __paymentNotice?: string[] }).__paymentNotice = calls;
+  });
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await download;
+  const coverText = await page.evaluate(() => (window as Window & { __paymentNotice?: string[] }).__paymentNotice?.join(' ') ?? '');
+  expect(coverText.replace(/\s+/gu, ' ')).toMatch(/The billing client remains responsible for pay\s*ment\./u);
+  expect(coverText.replace(/\s+/gu, ' ')).toMatch(/This document does not make the end client liable for payment\./u);
+});
+
+test('loads every runtime asset from the product origin @claim:no-third-party-runtime-assets', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (['script', 'stylesheet', 'font', 'image'].includes(request.resourceType())) requests.push(request.url());
+  });
+  await page.goto('/demo');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await download;
+  const origin = new URL(page.url()).origin;
+  expect(requests).not.toEqual([]);
+  expect(requests.every((url) => new URL(url).origin === origin)).toBe(true);
 });

@@ -2,7 +2,7 @@
 
 ## Direction: topographic cartography
 
-Performed For resolves a relationship that accounting software flattens: the payer is one place, the beneficiary another, and the engagement is the route between them. The visual system borrows from field maps rather than finance dashboards. Fine contour lines represent distinct commercial identities without implying a corporate hierarchy; a coral route marker connects the points that belong on one invoice package. The working surface feels like a durable survey sheet—quiet, exact, and meant to be annotated.
+Performed For resolves a relationship that accounting software flattens: the billing client pays, the end client receives the work, and the project connects them. The visual system borrows from field maps rather than finance dashboards. Fine contour lines represent distinct commercial identities without implying a corporate hierarchy; a coral marker connects the points that belong on one invoice package. The working surface feels like a durable survey sheet—quiet, exact, and meant to be annotated.
 
 This is deliberately a single-mode, warm-paper interface. The explicit canvas avoids an ornamental “dark dashboard” treatment and gives generated PDFs and the app the same recognizable character.
 
@@ -52,7 +52,7 @@ State changes use 180–240 ms opacity and small translate transitions with a ph
 
 ## Original asset plan and provenance
 
-The hero is an abstract aerial map of layered invoice sheets: paper contours, two distinct mapped zones, and one coral route marker. It explains the payer-to-beneficiary bridge without depicting fake product output or real entities. UI icons and the logo are hand-authored SVG/CSS geometry.
+The hero is an abstract aerial map of layered invoice sheets: paper contours, two distinct mapped zones, and one coral marker. It explains the billing-client-to-end-client relationship without depicting fake product output or real entities. UI icons and the logo are hand-authored SVG/CSS geometry.
 
 Prompt sheet:
 

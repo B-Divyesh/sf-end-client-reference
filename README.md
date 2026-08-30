@@ -1,24 +1,32 @@
 # Performed For
 
-Performed For adds a clear end-client cover to an existing invoice PDF. It is for subcontractors, fractional specialists, and white-label agencies who bill a prime client but need to identify the ultimate customer and project.
+Add an end-client cover to an existing invoice PDF.
 
-Start with the one-click [sample demo](https://end-client-reference.sociobot.in/demo), or choose an invoice and enter its billing client, end client, and project/PO reference. The download contains the cover followed by the original invoice page.
+It is for subcontractors and agencies that invoice a billing client but must name the end client and project.
+
+Start with the one-click [sample demo](https://end-client-reference.sociobot.in/demo). Or choose an invoice and enter its billing client, end client, and project reference.
+
+The download adds one cover before the original invoice pages. The cover says the end client is not liable for payment.
 
 Live: <https://end-client-reference.sociobot.in>
 
-## What it does
-
-- Generates a companion cover and combines it with an existing PDF.
-- Maintains a relationship log and CSV report in the browser.
-- Downloads the relationship log as JSON and imports valid version 1 backups.
-- Clearly says that the end client is not liable for payment.
-- Does not create invoices, collect payment, manage contacts, or model entity trees.
-
-Three packages are free. A $19 one-time license unlocks unlimited generation and relationship recall. Checkout and license verification use the Sociobot billing API; no payment provider is embedded in this app.
-
 ## Demo and data
 
-`/demo` and `/?demo=1` open a completed Northline Studio example. The persistent demo banner can reset the sample or start a real workspace. Demo records use the separate `demo:performed-for` IndexedDB namespace; ordinary records use `performed-for`. Starting for real deletes the demo database and counter. See [the demo sandbox notes](.factory/demo.md) and [tested product claims](.factory/claims.json).
+`/demo` and `/?demo=1` open a completed Northline Studio example.
+
+The demo banner can reset the original sample. Start for real discards the demo data.
+
+Demo records use `demo:performed-for`. Ordinary records use `performed-for`.
+
+Invoice PDFs stay in your browser. The relationship log stores only metadata.
+
+No analytics, third-party scripts, CDN fonts, or cloud document storage are used.
+
+## License
+
+Three packages are free. A $19 one-time license enables unlimited packages and saved client suggestions on this device.
+
+You can restore an active license on another device. Checkout and license verification use the Sociobot billing API.
 
 ## Run locally
 
@@ -29,7 +37,7 @@ npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite. To exercise install/offline behavior, use a production preview:
+Open the URL printed by Vite. For the offline path, use a production preview:
 
 ```sh
 npm run build
@@ -38,7 +46,7 @@ npm run preview
 
 Optional build-time variables:
 
-- `VITE_BILLING_BASE` — billing API root. Defaults to `https://api.sociobot.in/api/v1` for the public release.
+- `VITE_BILLING_BASE` — billing API root. Defaults to `https://api.sociobot.in/api/v1`.
 - `VITE_LICENSE_PRICE` — displayed one-time price. Defaults to `$19`.
 
 ## Test and build
@@ -50,21 +58,22 @@ npm run typecheck
 npm run build
 ```
 
-`npm test` runs unit tests plus Chromium end-to-end tests for real PDF merging, exact source-page content streams, formula-safe CSV output, backup/import, deletion, malformed-data recovery, paid recall, free and size boundaries, demo disposal, computed text sizes, complete mobile target dimensions, accessibility, direct legal routes, and offline reload. Playwright always creates a fresh production build and Vite preview; it will not reuse a development server for PWA checks. The offline claim uses an isolated browser context, waits for service-worker control, reloads offline, and generates a sample PDF without the network. The pinned Playwright version is 1.58.2. `npm run lint` and `npm run typecheck` run static checks. `npm run build` type-checks and writes the static deployment to `dist/`, including `dist/index.html`, direct `/demo`, `/privacy`, and `/terms` documents, a standard-shell 404, host headers, and a service worker with the hashed assets injected into its precache.
+`npm test` checks:
 
-Set `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in` to run browser checks against an already deployed artifact. Without that variable, Playwright always starts the fresh local production preview.
+- original invoice pages stay unchanged;
+- CSV cells cannot run spreadsheet formulas;
+- demo data is discarded;
+- saved records can be exported, imported, and deleted;
+- mobile text and controls meet their size limits;
+- routes, accessibility, and offline reload work.
 
-Deploy the contents of `dist/` to a static host. The repository does not manage DNS, billing registration, or infrastructure.
+Playwright starts a fresh production preview for PWA checks. The pinned Playwright version is 1.58.2.
 
-## Data and security notes
+`npm run build` type-checks the app and writes it to `dist/`. The output includes direct route files, the 404 page, host settings, and an offline service worker.
 
-- The original PDF is held only long enough to create the local download.
-- Generated cover text is rasterized before being embedded so names in the user’s writing system render as entered; CSV/JSON remain machine-readable text.
-- Backup JSON downloads valid records; Import JSON accepts only complete version 1 backups and saves them atomically.
-- Individual records can be deleted. If old unreadable data is found, the app can remove only those entries while keeping valid records and the saved license.
-- No analytics, third-party scripts, CDN fonts, or cloud document storage are used.
+Set `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in` to test an already deployed artifact.
 
-See [the researched brief](.factory/brief.json), [visual system](.factory/design.md), [privacy notice](https://end-client-reference.sociobot.in/privacy), and [terms](https://end-client-reference.sociobot.in/terms).
+Deploy `dist/` to the configured static host. This repository does not manage DNS or billing registration.
 
 ## License
 

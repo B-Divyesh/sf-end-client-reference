@@ -29,7 +29,7 @@ test('reloads and generates a package offline from a fresh production visit @cla
 
   try {
     await page.goto('/demo', { waitUntil: 'load' });
-    await expect(page.getByRole('heading', { name: 'Add the end client to every invoice.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Try the sample invoice.' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Generate package' })).toBeVisible();
 
     const workerState = await waitForWorkerControl(page);
@@ -50,7 +50,7 @@ test('reloads and generates a package offline from a fresh production visit @cla
     await context.setOffline(true);
     const reloadResponse = await page.reload({ waitUntil: 'load' });
     expect(reloadResponse?.status()).toBe(200);
-    await expect(page.getByRole('heading', { name: 'Add the end client to every invoice.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Try the sample invoice.' })).toBeVisible();
     await expect(page.getByText('Offline.', { exact: false })).toBeVisible();
     await expect(page.getByText('northline-studio-invoice.pdf · sample invoice ready')).toBeVisible();
 
