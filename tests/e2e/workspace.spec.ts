@@ -117,6 +117,44 @@ test('keeps every page axe-clean and announces an available update', async ({ pa
   await expect(page.locator('#toast')).toBeVisible();
 });
 
+test('shows demo workflow steps in their numbered order', async ({ page }) => {
+  for (const [path, expected] of [
+    ['/', ['01 Source invoice', '02 Relationship']],
+    ['/demo', ['01 Relationship', '02 Source invoice']],
+  ] as const) {
+    await page.goto(path);
+    const steps = await page.locator('#package-form fieldset').evaluateAll((fieldsets) => fieldsets.map((fieldset) => ({
+      label: fieldset.querySelector('legend')?.textContent?.replace(/\s+/gu, ' ').trim(),
+      top: fieldset.getBoundingClientRect().top,
+    })).sort((first, second) => first.top - second.top));
+    expect(steps.map(({ label }) => label), path).toEqual(expected);
+    expect(steps[0]?.top, path).toBeLessThan(steps[1]?.top ?? 0);
+  }
+});
+
+test('keeps returned license tokens out of initial asset referrers', async ({ browser }) => {
+  const context = await browser.newContext();
+  const isolatedPage = await context.newPage();
+  const assetRequests: Array<{ url: string; referrer: string }> = [];
+  try {
+    await isolatedPage.route('https://api.sociobot.in/**', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify({ valid: false }),
+    }));
+    isolatedPage.on('request', (request) => {
+      if (['image', 'script', 'stylesheet'].includes(request.resourceType())) {
+        assetRequests.push({ url: request.url(), referrer: request.headers().referer ?? '' });
+      }
+    });
+    await isolatedPage.goto('/?license=secret-regression-token', { waitUntil: 'networkidle' });
+    await expect(isolatedPage).not.toHaveURL(/license=/u);
+    expect(await isolatedPage.evaluate(() => localStorage.getItem('sb_license:end-client-reference'))).toBe('secret-regression-token');
+    expect(assetRequests.length).toBeGreaterThan(0);
+    expect(assetRequests.filter(({ referrer }) => referrer.includes('license='))).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});
+
 test('legal routes are direct-loadable and semantic', async ({ page }) => {
   for (const [route, title] of [['/privacy', 'Privacy — Performed For'], ['/terms', 'Terms — Performed For']] as const) {
     await page.goto(route);
@@ -420,10 +458,58 @@ test('allows three free packages and blocks the fourth @claim:three-free-package
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Generate package' }).click();
     await downloadPromise;
+    await expect(page.getByRole('button', { name: 'Generate package' })).toBeEnabled();
+    await expect(page.locator('#license-badge')).toHaveText(`${2 - attempt} free packages left`);
   }
   expect(await page.evaluate(() => localStorage.getItem('pf_generation_count'))).toBe('3');
   await page.getByRole('button', { name: 'Generate package' }).click();
   await expect(page.locator('#form-error')).toHaveText('You’ve used the 3 free packages. Restore or buy the one-time unlock to keep generating.');
+});
+
+test('commits package state before exposing the download completion boundary', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#invoice-file').setInputFiles({ name: 'ordered-invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  await page.getByLabel('Billing client The company responsible for payment').fill('Ordered Prime');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Ordered End Client');
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('ORDERED-BOUNDARY');
+
+  await page.evaluate(async () => {
+    const request = indexedDB.open('performed-for', 1);
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    (window as Window & { __releaseIdbLock?: boolean }).__releaseIdbLock = false;
+    const transaction = database.transaction('relationships', 'readwrite');
+    const store = transaction.objectStore('relationships');
+    const keepAlive = (): void => {
+      const next = store.get('__hold_package_commit__');
+      next.onsuccess = () => {
+        if (!(window as Window & { __releaseIdbLock?: boolean }).__releaseIdbLock) keepAlive();
+      };
+    };
+    keepAlive();
+  });
+
+  let downloadSeen = false;
+  const downloadPromise = page.waitForEvent('download').then(async (download) => {
+    downloadSeen = true;
+    return {
+      download,
+      count: await page.evaluate(() => localStorage.getItem('pf_generation_count')),
+    };
+  });
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await page.waitForTimeout(250);
+  expect(downloadSeen).toBe(false);
+  await page.evaluate(() => { (window as Window & { __releaseIdbLock?: boolean }).__releaseIdbLock = true; });
+
+  const completed = await downloadPromise;
+  expect(completed.download.suggestedFilename()).toBe('ORDERED-BOUNDARY-performed-for.pdf');
+  expect(completed.count).toBe('1');
+  await expect(page.getByRole('cell', { name: 'ORDERED-BOUNDARY', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Generate package' })).toBeEnabled();
+  await expect(page.locator('#toast')).toContainText('Package ready');
 });
 
 test('exports the sample relationship as CSV @claim:csv-export', async ({ page }) => {

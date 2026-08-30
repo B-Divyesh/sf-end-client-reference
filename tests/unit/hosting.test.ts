@@ -10,12 +10,15 @@ describe('static-host release policy', () => {
     };
     expect(config.globalHeaders['Content-Security-Policy']).toContain("frame-ancestors 'none'");
     expect(config.globalHeaders['Content-Security-Policy']).toContain('https://api.sociobot.in');
+    expect(config.globalHeaders['Referrer-Policy']).toBe('no-referrer');
     expect(config.routes.find((route) => route.route === '/assets/*')?.headers?.['Cache-Control']).toContain('immutable');
     expect((config as { mimeTypes?: Record<string, string> }).mimeTypes?.['.webmanifest']).toBe('application/manifest+json');
     expect(config.responseOverrides['404']).toEqual({ rewrite: '/404.html', statusCode: 404 });
     const routeBuilder = await readFile('scripts/copy-routes.mjs', 'utf8');
     expect(routeBuilder).toContain("new URL('../dist/index.html'");
     expect(routeBuilder).toContain("new URL('../dist/404.html'");
+    const entryDocument = await readFile('index.html', 'utf8');
+    expect(entryDocument).toContain('<meta name="referrer" content="no-referrer" />');
   });
 
   it('always tests the PWA through a fresh production preview', async () => {

@@ -183,11 +183,11 @@ async function renderWorkspace(): Promise<void> {
       ${storageError ? `<p class="notice error" role="alert">${storageError}</p>` : ''}
       <p class="notice offline-notice" id="offline-notice" hidden><strong>Offline.</strong> The workspace and your records still work; license checks will resume when connected.</p>
       <form id="package-form" class="${isDemo ? 'demo-form' : ''}" novalidate>
-        <fieldset class="source-fieldset"><legend><span>01</span> Source invoice</legend>
+        <fieldset class="source-fieldset"><legend><span>${isDemo ? '02' : '01'}</span> Source invoice</legend>
           <label class="file-drop" for="invoice-file"><strong>Choose the existing invoice PDF</strong><span id="file-help">PDF only · up to 25 MB · read locally, never retained</span><input id="invoice-file" name="invoice" type="file" accept="application/pdf,.pdf" aria-describedby="file-help file-error" ${isDemo ? '' : 'required'}><span class="file-name" id="file-name">No file selected</span></label>
           <p class="field-error" id="file-error" aria-live="polite"></p>
         </fieldset>
-        <fieldset class="relationship-fieldset"><legend><span>02</span> Relationship</legend>
+        <fieldset class="relationship-fieldset"><legend><span>${isDemo ? '01' : '02'}</span> Relationship</legend>
           <div class="field-grid">
             <label>Billing client <small>The company responsible for payment</small><input name="billingClient" autocomplete="organization" list="billing-clients" maxlength="180" required value="${isDemo ? esc(DEMO_DETAILS.billingClient) : ''}"></label>
             <label>End client <small>The customer receiving the work; not the payer</small><input name="endClient" autocomplete="off" list="end-clients" maxlength="180" required value="${isDemo ? esc(DEMO_DETAILS.endClient) : ''}"></label>
@@ -302,13 +302,22 @@ async function renderWorkspace(): Promise<void> {
     try {
       const bytes = await buildInvoicePackage(await selectedFile.arrayBuffer(), details);
       const invoiceLabel = details.invoiceNumber || details.reference;
-      downloadBlob(new Blob([bytes as BlobPart], { type: 'application/pdf' }), `${safeFilename(invoiceLabel)}-performed-for.pdf`);
       const record: RelationshipRecord = { ...details, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+      let recordSaved = true;
       try { await putRecord(record); records = await listRecords(); refreshRecords(records); }
-      catch { toast('Package downloaded, but its relationship could not be added to local storage.', 'error'); }
+      catch { recordSaved = false; }
       if (!licenseState.unlocked) localStorage.setItem(usageKey, String(used + 1));
       updateLicenseUi(licenseState);
-      toast('Package ready. The cover and original invoice were downloaded together.');
+      // A download is the observable completion boundary. Commit the usage
+      // count and relationship first so consumers never see a half-finished
+      // package state when the browser emits its download event.
+      downloadBlob(new Blob([bytes as BlobPart], { type: 'application/pdf' }), `${safeFilename(invoiceLabel)}-performed-for.pdf`);
+      toast(
+        recordSaved
+          ? 'Package ready. The cover and original invoice were downloaded together.'
+          : 'Package downloaded, but its relationship could not be added to local storage.',
+        recordSaved ? 'normal' : 'error',
+      );
     } catch (error) {
       if (formError) formError.textContent = error instanceof Error ? error.message : 'The package could not be generated. Try the original invoice file.';
     } finally { if (button) { button.disabled = false; button.textContent = 'Generate package'; } }
