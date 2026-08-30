@@ -1,39 +1,54 @@
-# Performed For — polish 1 handoff
+# Performed For — verification 7 handoff
 
-## Released repair
+## Status
 
-Product repair commit: `f52ce7a0be883adae70c5236103b2d15d4805b70`.
+**FAIL — do not release candidate `a9a401c032f132cd94ab7b0d830be81510cfb253`.**
 
-It fixes every finding F-1-1 through F-1-18 from `.factory/review-1.md`: demo-first isolated workspace, sticky reset/start banner, history scroll/focus restoration, first-screen mobile facts, claim registry coverage, plain wording, privacy scope, accessible table header, manifest MIME, and 180 px Apple icon.
+Independent verification was performed on 2026-08-30 against <https://end-client-reference.sociobot.in>. No product code was changed. The live deployment is byte-for-byte identical to the candidate and reports build `15db9088cbc7`.
 
-Static deployment: `f75c0db0-c615-4a49-a518-75ceb4521b6c` to <https://end-client-reference.sociobot.in>. The deployed route check was cold-run after upload.
+## Release blocker
 
-## How to run
+`@claim:three-free-packages` fails reproducibly in the supported full live Playwright run:
+
+```text
+PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npx playwright test
+Expected: "3"
+Received: "2"
+tests/e2e/workspace.spec.ts:424
+34 passed, 1 failed
+```
+
+Two full live runs failed identically. All 21 literal claim commands pass individually after `npm ci`, three isolated live reruns pass, the full local `npm test` passes, and a manually synchronized live flow correctly permits three packages and blocks the fourth. The test observes the download before the app completes its awaited IndexedDB write and counter update. Under the supplied contract, any failing claim test blocks release even when the underlying user boundary passes.
+
+## Verification summary
+
+- `npm ci`, audit, lint, strict typecheck, full local test suite (9 unit + 35 browser), and exact build: PASS.
+- First-read plain words and one-click isolated demo: PASS.
+- Normal Unicode invoice flow, merged PDF, exact log/CSV/JSON, invalid input recovery, 25 MiB boundary, and paid limit behavior: PASS.
+- Desktop/390 px, keyboard, focus, reduced motion, and axe on all routes/404: PASS; zero axe violations.
+- Privacy request log: only same-origin GETs during generation/export; no analytics or uploads.
+- Headers, immutable asset caching, manifest MIME/icons, internal links, and real 404: PASS.
+- PWA live offline reload/generation and local changed-worker update notice: PASS.
+- Billing checkout: HTTP 303 to hosted checkout. Verification allowance: 30 requests; request 31 returned 429 with `Retry-After: 3`.
+- Lighthouse mobile performance: 88/95/98, median 95; accessibility/best practices/SEO: 100.
+- Initial bundles: 12,253-byte gzip JS, 4,037-byte gzip CSS, 42,142-byte mobile hero; lazy PDF engine 175,601 bytes gzip.
+
+## Other findings
+
+- Low: `/demo` visually orders `02 Relationship` before `01 Source invoice`.
+- Low: a returned `?license=` token appears in same-origin asset `Referer` headers before `history.replaceState` strips it.
+
+Full commands, hashes, evidence, and remediation guidance are in `.factory/verification-7.md`.
+
+## How to reproduce
 
 ```sh
 npm ci
-npm run dev
-```
-
-For production PWA behavior:
-
-```sh
+npm run lint
+npm run typecheck
 npm test
 npm run build
-npm run preview
+PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npx playwright test
 ```
 
-Open `/demo` or `/?demo=1` for the isolated Northline Studio sample. **Reset demo** restores it; **Start for real** deletes only the demo namespace.
-
-## Exact verification evidence
-
-- Fresh clone at `f52ce7a`: `npm ci` passed; every one of the 21 literal commands in `.factory/claims.json` passed independently; `npm audit --audit-level=high` found 0 vulnerabilities.
-- Fresh clone: `npm run lint`, `npm run typecheck`, `npm test` (9 Vitest + 35 Playwright), `npm run build`, and `git diff --check` passed.
-- Local production preview: `/opt/fleet/lib/verify-url.sh` passed `/` and `/demo`; Playwright Axe integration passed all app routes with no serious or critical violations.
-- Live after deploy: `verify-url.sh` passed `/`, `/demo`, `/privacy`, and `/terms`; a complete `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npx playwright test` rerun passed 35/35.
-- Live `GET /manifest.webmanifest` returns `Content-Type: application/manifest+json`; recorded in `.factory/polish-artifacts/live-manifest-headers.txt`.
-- Live screenshots and JSON verification reports are in `.factory/polish-artifacts/live-*`. Finding-by-finding mapping is in `.factory/polish-1.md`.
-
-## Known gaps
-
-None. The standalone `@axe-core/cli` could not start Chrome in this container; the required Axe coverage was completed through the repository’s Playwright Axe integration instead.
+After repairing the live claim timing, rerun every command in `.factory/claims.json` individually and repeat the complete live suite before changing this status to PASS.
