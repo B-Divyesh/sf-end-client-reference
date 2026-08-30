@@ -120,10 +120,10 @@
   },
   {
     "id": "hosted-checkout",
-    "claim": "Buying opens Sociobot's hosted Dodo checkout, where Sociobot/Dodo is the merchant of record",
+    "claim": "Buying opens the hosted Dodo checkout, whose merchant-of-record service handles order inquiries and returns",
     "where": "License action, privacy notice, terms",
     "test": "npm test -- --grep @claim:hosted-checkout",
-    "sandbox": "fresh browser context; assert the purchase link discloses its external hosted destination; request the public product checkout without following it or purchasing; assert the 303 Dodo checkout location and legal wording"
+    "sandbox": "fresh browser context; assert the purchase link discloses its external hosted destination; request the public product checkout without purchasing; assert its 303 Dodo location and the hosted page's merchant-of-record wording"
   },
   {
     "id": "end-client-not-payer",

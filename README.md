@@ -28,9 +28,9 @@ No analytics, third-party scripts, CDN fonts, or cloud document storage are used
 
 Three packages are free. A $19 one-time license enables unlimited packages and saved client suggestions on this device.
 
-You can restore an active license on another device. Buying opens Sociobot’s hosted Dodo checkout, where Sociobot/Dodo is the merchant of record.
+You can restore an active license on another device. Buying opens Sociobot’s hosted Dodo checkout.
 
-Use the checkout support link for refund requests. License verification uses the Sociobot billing API.
+Dodo is the merchant of record and handles order inquiries and returns. License verification uses the Sociobot billing API.
 
 ## Run locally
 

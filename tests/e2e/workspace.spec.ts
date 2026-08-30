@@ -1021,11 +1021,18 @@ test('opens the disclosed hosted checkout without starting a purchase @claim:hos
 
   const response = await request.get('https://api.sociobot.in/api/v1/products/end-client-reference/checkout', { maxRedirects: 0 });
   expect(response.status()).toBe(303);
-  expect(response.headers().location).toMatch(/^https:\/\/checkout\.dodopayments\.com\/session\//u);
+  const hostedLocation = response.headers().location;
+  expect(hostedLocation).toMatch(/^https:\/\/checkout\.dodopayments\.com\/session\//u);
+  if (!hostedLocation) throw new Error('Hosted checkout redirect was missing.');
+  const hosted = await request.get(hostedLocation);
+  expect(hosted.status()).toBe(200);
+  const hostedPage = await hosted.text();
+  expect(hostedPage).toContain('Merchant of Record');
+  expect(hostedPage).toContain('handles order-related inquiries and returns');
 
   for (const path of ['/privacy', '/terms']) {
     await page.goto(path);
-    await expect(page.locator('main')).toContainText('Sociobot/Dodo is the merchant of record');
+    await expect(page.locator('main')).toContainText('Dodo is the merchant of record and handles order inquiries and returns');
     await expect(page.locator('main')).not.toContainText('receipts, taxes, and refunds are handled there');
   }
 });
