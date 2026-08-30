@@ -46,7 +46,7 @@ function shell(content: string): string {
     </a>
     <nav aria-label="Primary"><a id="nav-workspace" href="/">Workspace</a><a id="nav-demo" href="/demo">Try sample</a><a id="nav-records" href="/#records">Relationship log</a><a id="nav-privacy" href="/privacy">Privacy</a></nav>
   </header>${content}
-  <footer><p>Invoice files stay on your device. No analytics. No cloud document storage.</p><p><a id="footer-privacy" href="/privacy">Privacy</a><a id="footer-terms" href="/terms">Terms</a><span>Built by Param Factory · v${__APP_VERSION__} · build ${__BUILD_ID__} · Illustration generated for this product.</span></p></footer>
+  <footer><p><strong>Performed For adds an end-client cover to an existing invoice PDF.</strong><span>Invoice files stay on your device. No analytics. No cloud document storage.</span></p><p><a id="footer-privacy" href="/privacy">Privacy</a><a id="footer-terms" href="/terms">Terms</a><span>Built by Param Factory · v${__APP_VERSION__} · build ${__BUILD_ID__} · Illustration generated for this product.</span></p></footer>
   <div class="sr-only" id="route-announcer" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>`;
 }
@@ -78,7 +78,7 @@ function renderLegal(kind: 'privacy' | 'terms'): void {
     <p>Performed For creates a companion cover page from details you supply and combines it with an existing PDF. It does not issue invoices, provide accounting or legal advice, or change who owes payment.</p>
     <h2>Your responsibility</h2><p>You must have permission to process the invoice and client details you enter. Review every generated package before sending it. The billing client remains the payer; naming an end client never makes that end client liable.</p>
     <h2>One-time unlock</h2><p>The ${esc(LICENSE_PRICE)} one-time purchase unlocks unlimited package generation and saved client suggestions for this product. Sociobot/Dodo is the merchant of record. Checkout, receipts, taxes, and refunds are handled there. A refunded or revoked purchase deactivates its license. You can restore an active license on another device.</p>
-    <h2>Availability and warranty</h2><p>The software is provided “as is” without warranties. Keep your own copies of invoices, downloads, and data backups. We may update the app for security or compatibility while preserving the core local-first workflow.</p>
+    <h2>Availability and warranty</h2><p>The software is provided “as is” without warranties. Keep your own copies of invoices, downloads, and data backups. We may update the app for security or compatibility.</p>
     <h2>Contact</h2><p>Questions can be sent to <a href="mailto:support@sociobot.in">support@sociobot.in</a>.</p></main>`;
   app.innerHTML = shell(kind === 'privacy' ? privacy : terms);
 }
@@ -145,10 +145,11 @@ async function renderWorkspace(): Promise<void> {
   let storageError = '';
   try {
     if (isDemo) {
-      await clearRecords();
-      localStorage.removeItem(usageKey);
-      await putRecord({ ...DEMO_DETAILS, id: 'demo-northline-1048', createdAt: '2026-08-29T10:30:00.000Z' });
       records = await listRecords();
+      if (!records.length) {
+        await putRecord({ ...DEMO_DETAILS, id: 'demo-northline-1048', createdAt: '2026-08-29T10:30:00.000Z' });
+        records = await listRecords();
+      }
     } else {
       const stored = await inspectRecords();
       records = stored.records;
@@ -178,8 +179,8 @@ async function renderWorkspace(): Promise<void> {
     ${isDemo ? demoBanner : landingHero}
 
     <section class="workspace ${isDemo ? 'demo-workspace' : ''}" aria-labelledby="workspace-title">
-      <div class="section-heading"><div><p class="eyebrow">Invoice package</p><h2 id="workspace-title">Prepare a package</h2></div><span class="status-chip" id="license-badge"></span></div>
-      ${isDemo ? demoSnapshot : '<ol class="route-steps" aria-label="Package steps"><li><span>1</span>Invoice PDF</li><li><span>2</span>Relationship</li><li><span>3</span>Download</li></ol>'}
+      <div class="section-heading"><div><p class="eyebrow">Invoice package</p><h2 id="workspace-title">${isDemo ? 'Prepare a package' : 'How it works'}</h2></div><span class="status-chip" id="license-badge"></span></div>
+      ${isDemo ? demoSnapshot : '<ol class="route-steps" aria-label="How it works"><li><span>1</span>Choose an invoice PDF</li><li><span>2</span>Name both clients</li><li><span>3</span>Download the combined PDF</li></ol>'}
       ${storageError ? `<p class="notice error" role="alert">${storageError}</p>` : ''}
       <p class="notice offline-notice" id="offline-notice" hidden><strong>Offline.</strong> The workspace and your records still work; license checks will resume when connected.</p>
       <form id="package-form" class="${isDemo ? 'demo-form' : ''}" novalidate>

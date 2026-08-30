@@ -22,7 +22,7 @@ Invoice PDFs stay in your browser. The relationship log stores only metadata.
 
 No analytics, third-party scripts, CDN fonts, or cloud document storage are used.
 
-## License
+## Price and unlock
 
 Three packages are free. A $19 one-time license enables unlimited packages and saved client suggestions on this device.
 
@@ -75,6 +75,6 @@ Set `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in` to test an al
 
 Deploy `dist/` to the configured static host. This repository does not manage DNS or billing registration.
 
-## License
+## Software license
 
 MIT — see [LICENSE](LICENSE).

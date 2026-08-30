@@ -132,6 +132,19 @@ test('shows demo workflow steps in their numbered order', async ({ page }) => {
   }
 });
 
+test('shows verb-led how-it-works steps and every phone navigation destination', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const path of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
+    await page.goto(path);
+    for (const name of ['Workspace', 'Try sample', 'Relationship log', 'Privacy']) {
+      await expect(page.getByRole('navigation').getByRole('link', { name, exact: true })).toBeVisible();
+    }
+  }
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'How it works', level: 2 })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'How it works' })).toHaveText(/Choose an invoice PDF.*Name both clients.*Download the combined PDF/su);
+});
+
 test('keeps returned license tokens out of initial asset referrers', async ({ browser }) => {
   const context = await browser.newContext();
   const isolatedPage = await context.newPage();
@@ -217,6 +230,7 @@ test('uses literal product copy and puts the exact free and paid fact on the fir
 });
 
 test('restores scroll position and the triggering control after Back navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.locator('#records')).toBeAttached();
   await page.locator('#records').evaluate((element) => scrollTo({ top: element.getBoundingClientRect().top + scrollY, behavior: 'instant' }));
@@ -229,6 +243,122 @@ test('restores scroll position and the triggering control after Back navigation'
   await expect(page).toHaveURL('/');
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before - 4);
   await expect(page.locator('#nav-privacy')).toBeFocused();
+  await expect(page.locator('#nav-privacy')).toBeVisible();
+});
+
+test('adds the relationship cover before every original page @claim:cover-before-invoice', async ({ page }) => {
+  await page.goto('/demo');
+  await page.evaluate(() => {
+    const calls: string[] = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function patchedFillText(...args: Parameters<CanvasRenderingContext2D['fillText']>) {
+      calls.push(String(args[0]));
+      return original.apply(this, args);
+    };
+    (window as Window & { __coverText?: string[] }).__coverText = calls;
+  });
+  const source = await detailedInvoiceBuffer();
+  await page.locator('#invoice-file').setInputFiles({ name: 'known-two-page-invoice.pdf', mimeType: 'application/pdf', buffer: source });
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  const download = await downloadPromise;
+  const output = await readFile((await download.path())!);
+  const merged = await PDFDocument.load(output);
+  expect(merged.getPageCount()).toBe(3);
+  expect(merged.getPage(0).getWidth()).toBeCloseTo(595.28, 1);
+  expect(merged.getPage(1).getWidth()).toBe(400);
+  expect(merged.getPage(2).getWidth()).toBe(612);
+  expect((await contentHashes(output)).slice(1)).toEqual(await contentHashes(source));
+  const coverText = await page.evaluate(() => (window as Window & { __coverText?: string[] }).__coverText ?? []);
+  expect(coverText.join(' ')).toContain('Harbour Arts Council');
+  expect(coverText.join(' ')).toContain('HAC-2026-014 · Autumn campaign');
+});
+
+test('keeps a generated relationship in the demo log after reload @claim:relationship-log', async ({ page }) => {
+  await page.goto('/demo');
+  await page.getByLabel('Billing client The company responsible for payment').fill('Northline Studio Test');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('River Museum Trust');
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('RMT-2026-88');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await download;
+  await page.reload();
+  await expect(page.getByRole('cell', { name: 'Northline Studio Test', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'River Museum Trust', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'RMT-2026-88', exact: true })).toBeVisible();
+  const stored = await page.evaluate(async () => {
+    const request = indexedDB.open('demo:performed-for');
+    return new Promise<Record<string, string>[]>((resolve, reject) => {
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const all = database.transaction('relationships').objectStore('relationships').getAll();
+        all.onsuccess = () => { database.close(); resolve(all.result); };
+        all.onerror = () => reject(all.error);
+      };
+    });
+  });
+  const generated = stored.find(({ reference }) => reference === 'RMT-2026-88');
+  expect(generated).toMatchObject({
+    billingClient: 'Northline Studio Test', endClient: 'River Museum Trust',
+    reference: 'RMT-2026-88', sourceFileName: 'northline-studio-invoice.pdf',
+  });
+  expect(Number.isNaN(Date.parse(generated?.createdAt ?? ''))).toBe(false);
+});
+
+test('deactivates a revoked license and blocks paid generation @claim:license-revocation', async ({ page }) => {
+  await page.goto('/demo');
+  await page.getByRole('link', { name: 'Start for real' }).first().click();
+  await page.evaluate(() => {
+    localStorage.setItem('pf_generation_count', '3');
+    localStorage.setItem('sb_license:end-client-reference', 'later-revoked-license');
+    localStorage.setItem('sb_license:end-client-reference:verdict', JSON.stringify({ valid: true, checkedAt: 0 }));
+  });
+  await page.route('https://api.sociobot.in/api/v1/products/end-client-reference/verify**', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ valid: false, reason: 'revoked', expires_at: null }),
+  }));
+  await page.reload();
+  await expect(page.locator('#license-notice')).toHaveText('License no longer active.');
+  await expect(page.locator('#license-badge')).toHaveText('0 free packages left');
+  await page.locator('#invoice-file').setInputFiles({ name: 'blocked.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  await page.getByLabel('Billing client The company responsible for payment').fill('Revoked Billing Client');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Revoked End Client');
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('REVOKED-1');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await expect(page.locator('#form-error')).toContainText('used the 3 free packages');
+});
+
+test('removes records and the license when browser site data is cleared @claim:clear-site-data', async ({ page }) => {
+  await page.goto('/demo');
+  await page.getByRole('link', { name: 'Start for real' }).first().click();
+  await page.evaluate(async ({ record }) => {
+    localStorage.setItem('pf_generation_count', '2');
+    localStorage.setItem('sb_license:end-client-reference', 'remove-this-license');
+    localStorage.setItem('sb_license:end-client-reference:verdict', JSON.stringify({ valid: true, checkedAt: Date.now() }));
+    const request = indexedDB.open('performed-for', 1);
+    await new Promise<void>((resolve, reject) => {
+      request.onupgradeneeded = () => request.result.createObjectStore('relationships', { keyPath: 'id' });
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const transaction = database.transaction('relationships', 'readwrite');
+        transaction.objectStore('relationships').put(record);
+        transaction.oncomplete = () => { database.close(); resolve(); };
+        transaction.onerror = () => reject(transaction.error);
+      };
+    });
+  }, { record: backupRecord({ id: 'clear-me', reference: 'CLEAR-ME' }) });
+  await page.reload();
+  await expect(page.getByRole('cell', { name: 'CLEAR-ME', exact: true })).toBeVisible();
+  const session = await page.context().newCDPSession(page);
+  await session.send('Storage.clearDataForOrigin', { origin: new URL(page.url()).origin, storageTypes: 'all' });
+  await page.reload();
+  await expect(page.getByText('No relationships logged yet', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => ({
+    license: localStorage.getItem('sb_license:end-client-reference'),
+    verdict: localStorage.getItem('sb_license:end-client-reference:verdict'),
+    count: localStorage.getItem('pf_generation_count'),
+  }))).toEqual({ license: null, verdict: null, count: null });
 });
 
 test('captures and verifies a returned one-time license @claim:one-time-unlock', async ({ page }) => {
@@ -723,7 +853,11 @@ test('keeps computed copy at 16px or larger at desktop, 200%-zoom-equivalent 390
     });
     expect(undersized, `${width}px viewport has undersized visible copy`).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width}px viewport overflows`).toBeLessThanOrEqual(width);
-    if (width <= 390) await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeHidden();
+    if (width <= 390) {
+      for (const name of ['Workspace', 'Try sample', 'Relationship log', 'Privacy']) {
+        await expect(page.getByRole('navigation').getByRole('link', { name, exact: true })).toBeVisible();
+      }
+    }
   }
 });
 
@@ -749,7 +883,7 @@ test('keeps every visible mobile target at least 44 by 44px and reflows at 320px
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/');
   await expect(page.getByRole('link', { name: 'Workspace' })).toBeVisible();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeHidden();
+  await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 

@@ -145,5 +145,33 @@
     "where": "Relationship field help, README",
     "test": "npm test -- --grep @claim:exact-relationship-text",
     "sandbox": "fresh browser context; input the permitted maximum relationship values; capture every canvas text draw"
+  },
+  {
+    "id": "cover-before-invoice",
+    "claim": "The download adds an end-client cover before the original invoice pages",
+    "where": "Landing headline and output summary, README",
+    "test": "npm test -- --grep @claim:cover-before-invoice",
+    "sandbox": "fresh browser context; /demo; generate from a known two-page invoice; inspect cover drawing calls, page order, and original page content streams"
+  },
+  {
+    "id": "license-revocation",
+    "claim": "A refunded or revoked purchase deactivates its license",
+    "where": "Terms",
+    "test": "npm test -- --grep @claim:license-revocation",
+    "sandbox": "fresh browser context; seed a previously valid but stale verdict at the free limit; return a revoked fixture verdict; assert the inactive notice and blocked generation"
+  },
+  {
+    "id": "relationship-log",
+    "claim": "Generating a package adds its exact relationship to the local log",
+    "where": "Relationship log empty state",
+    "test": "npm test -- --grep @claim:relationship-log",
+    "sandbox": "fresh browser context; /demo; generate a distinct relationship; reload; assert the client names, reference, filename, and creation date remain in the demo database"
+  },
+  {
+    "id": "clear-site-data",
+    "claim": "Clearing this site's browser data removes local records and the license token",
+    "where": "Privacy notice",
+    "test": "npm test -- --grep @claim:clear-site-data",
+    "sandbox": "fresh browser context; seed an ordinary record, generation count, license token, and verdict; clear all origin storage through Chromium; reload and assert each is absent"
   }
 ]

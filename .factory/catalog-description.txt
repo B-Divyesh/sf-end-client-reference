@@ -1,1 +1,1 @@
-Add an end-client cover to an existing invoice PDF.
+Add an end-client cover before every existing invoice PDF.
