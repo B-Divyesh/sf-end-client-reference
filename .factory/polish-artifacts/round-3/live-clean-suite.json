@@ -1,0 +1,12 @@
+{
+  "source": "fresh remote clone with no dist directory",
+  "commit": "d536874",
+  "url": "https://end-client-reference.sociobot.in",
+  "command": "PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npm test",
+  "unitTests": 10,
+  "browserTestsPassed": 45,
+  "browserTestsSkipped": 1,
+  "browserTestsFailed": 0,
+  "skipReason": "The local service-worker replacement test cannot replace an immutable deployed worker; deployed offline reload still passed.",
+  "result": "PASS"
+}

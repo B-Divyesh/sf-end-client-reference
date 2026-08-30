@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-08-30T05:53:45.739Z",
+  "firstScreen": {
+    "cta": {
+      "x": 37,
+      "y": 479.34375,
+      "width": 316,
+      "height": 48.796875
+    },
+    "result": {
+      "x": 37,
+      "y": 592.140625,
+      "width": 316,
+      "height": 49.59375
+    },
+    "offline": {
+      "x": 37,
+      "y": 725.328125,
+      "width": 316,
+      "height": 24.796875
+    },
+    "price": {
+      "x": 37,
+      "y": 758.125,
+      "width": 316,
+      "height": 24.796875
+    }
+  },
+  "checkout": {
+    "visible": true,
+    "href": "https://api.sociobot.in/api/v1/products/end-client-reference/checkout",
+    "disclosure": true,
+    "status": 303,
+    "location": "https://checkout.dodopayments.com/session/cks_0NmUkQB0bjwgxgNFFsuyI",
+    "hostedStatus": 200,
+    "merchantText": true
+  },
+  "demo": {
+    "url": "https://end-client-reference.sociobot.in/?demo=1",
+    "title": "Demo — Performed For",
+    "banner": true,
+    "file": "northline-studio-invoice.pdf · ready",
+    "endClient": "Harbour Arts Council",
+    "record": "Sample record\nNorthline Studio → Harbour Arts Council"
+  },
+  "cleared": {
+    "inputFiles": 0,
+    "visibleName": "No file selected",
+    "snapshot": "northline-studio-invoice.pdf · cleared after download",
+    "pages": 2
+  },
+  "reset": {
+    "file": "northline-studio-invoice.pdf · sample invoice ready",
+    "rows": 1,
+    "endClient": "Harbour Arts Council"
+  },
+  "route": {
+    "url": "https://end-client-reference.sociobot.in/#records",
+    "focus": "records-title",
+    "scrollY": 3840,
+    "announcement": "Relationship log"
+  },
+  "notFound": {
+    "status": 404
+  },
+  "requestCount": 12,
+  "onlySameOriginProductFlow": true,
+  "errors": []
+}

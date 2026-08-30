@@ -1,12 +1,25 @@
 {
-  "url": "http://127.0.0.1:4173/",
   "mode": "mobile",
-  "performance": 100,
-  "accessibility": 100,
-  "bestPractices": 100,
-  "seo": 100,
-  "largestContentfulPaintMs": 1355.33,
-  "cumulativeLayoutShift": 0,
-  "totalBlockingTimeMs": 59,
-  "timeToInteractiveMs": 1355.33
+  "local": {
+    "url": "http://127.0.0.1:4173/",
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "largestContentfulPaintMs": 1355.33,
+    "cumulativeLayoutShift": 0,
+    "totalBlockingTimeMs": 59,
+    "timeToInteractiveMs": 1355.33
+  },
+  "live": {
+    "url": "https://end-client-reference.sociobot.in/",
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "largestContentfulPaintMs": 1110.132,
+    "cumulativeLayoutShift": 0,
+    "totalBlockingTimeMs": 34,
+    "timeToInteractiveMs": 1116.032
+  }
 }

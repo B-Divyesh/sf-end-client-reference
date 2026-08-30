@@ -1,44 +1,73 @@
-# Performed For — adversarial review 3 handoff
+# Performed For — polish round 3 handoff
 
 ## Outcome
 
-**FAIL.** Review 3 is recorded in `.factory/review-3.md` with six findings: one blocking, two high, one medium, and two minor. Product code was not changed.
+**PASS.** All six review-3 findings and every earlier review finding are resolved. The repaired PWA is live at <https://end-client-reference.sociobot.in>; the isolated one-click sample is <https://end-client-reference.sociobot.in/?demo=1>.
 
-The blocking defect is broken hash routing: **Relationship log** changes the URL to `/#records` from another route but leaves the visitor at the hero. A cold `/#records` deep link also stays at the top.
+Product repair commits: `9f60c04` and `d536874`.
 
-## What was done
+## What changed
 
-- Repeated cold first reads at 390 × 844 and 1440 × 900.
-- Exercised the one-click demo, Reset, Start for real, separate IndexedDB namespaces, real-data preservation, offline reload, and request logs.
-- Audited every landing and README sentence with word counts.
-- Ran all 25 claim commands independently from a clean clone.
-- Rechecked every review-1 and review-2 finding against live behavior and current code.
-- Crawled routes and links; checked metadata, 404 behavior, focus, Axe, headers, icons, and visual identity.
-- Checked missed AI/import/export/sync leverage.
+- Made `/#records` a real hash destination on direct load and from every route. It scrolls to the log, focuses its heading, announces the destination, and preserves Back state.
+- Clear the selected invoice from memory, the file input, and visible state after every successful download.
+- Added the `invoice-cleared-after-download` and `hosted-checkout` claims with browser tests.
+- Added visible and accessible hosted-checkout disclosure. Legal copy now matches the hosted page’s tested merchant, inquiry, and returns boundary.
+- Replaced “metadata” with the actual saved fields.
+- Made external-base Playwright runs independent of `dist/`; only the intentionally local service-worker replacement simulation skips against a deployment.
+- Updated the catalog description, README, demo notes, claims registry, and complete copy audit.
+- Preserved the topographic-cartography design, local IndexedDB namespaces, static PWA deployment class, and existing feature behavior.
 
 ## Verification
 
-Clean clone: `/tmp/performed-for-review3.B8mKRM/clone` at `bc54f16805ff47070860ba5294eaca25d20a97d4`.
+### Clean clone and claims
 
-- `npm ci`: PASS; audit found 0 vulnerabilities.
-- All 25 literal `.factory/claims.json` commands: PASS.
+A no-hard-link clone of `d536874` at `/tmp/performed-for-polish3-final.JTP8wE/clone` ran `npm ci` with zero vulnerabilities. All 27 literal commands in `.factory/claims.json` passed independently.
+
+Evidence: [clean-claim-results.json](polish-artifacts/round-3/clean-claim-results.json).
+
+### Local gates
+
 - `npm run lint`: PASS.
 - `npm run typecheck`: PASS.
-- `npm test`: PASS, 10 unit tests and 43 Chromium tests.
-- `npm run build`: PASS; `dist/` produced.
-- Live Playwright suite after build: PASS, 43/43.
-- Live Axe: zero violations on `/`, `/demo`, `/privacy`, `/terms`, and the designed 404.
-- `verify-url.sh`: PASS on `/`, `/demo`, `/privacy`, and `/terms`.
-- Live offline reload: 200 after service-worker control and `context.setOffline(true)`.
-- Demo/privacy request log: same-origin GET requests only.
+- `npm test`: PASS — 10 unit tests and 46 Chromium tests.
+- `npm run build`: PASS — `dist/index.html`, direct route files, 404, host config, and versioned service worker produced.
+- Bundle: 12.75 KB initial JavaScript gzip and 4.11 KB CSS gzip. The 175.81 KB PDF engine is lazy-loaded.
+- Axe integration: zero serious or critical findings on `/`, `/demo`, `/privacy`, `/terms`, and 404.
+- Local `verify-url.sh`: PASS on root, demo, privacy, and terms with no console errors.
+- Mobile Lighthouse: 100 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.36 s, CLS 0, TBT 59 ms.
 
-## Findings left for repair
+### Deployment and cold live checks
 
-1. `F-3-1` blocking — make direct and cross-route `#records` navigation scroll to, focus, and announce the log.
-2. `F-3-2` high — stop claiming selected invoice files are discarded after generation, or clear them and test it.
-3. `F-3-3` high — register and test merchant/checkout responsibilities, or narrow the legal wording.
-4. `F-3-4` medium — make the documented deployed-site test mode clean-checkout safe.
-5. `F-3-5` minor — replace “metadata” with the fields that are saved.
-6. `F-3-6` minor — disclose that purchase opens hosted checkout.
+The built `dist/` was uploaded only to the existing Azure Static Web App `sf-end-client-reference`. No DNS, shared service, database, or unrelated resource was read or changed.
 
-No real payment was made. Checkout was followed only to its hosted 200 response.
+- Fresh remote clone at `d536874`, with no `dist/`: `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npm test` passed 10 unit and 45 live browser tests. One local-only service-worker replacement simulation skipped; the deployed offline-reload test passed.
+- `verify-url.sh`: PASS on root, demo, privacy, and terms; all had one h1, `lang=en`, a main landmark, complete alt text, and no console errors.
+- Cold 390×844 flow: all first-screen facts fit; `?demo=1` showed the banner, prepared invoice, sample row, and fields; generation made a two-page PDF and cleared the selected file; Reset restored one seed row and the sample file.
+- Direct and cross-route `/#records`: URL correct, focus `records-title`, announcement “Relationship log,” and log in view.
+- Unknown path: HTTP 404 with “This page does not exist.”
+- Manifest: HTTP 200 with `application/manifest+json`.
+- Link crawl: all internal and legal links returned 200; purchase returned 303 to hosted Dodo checkout; mail links were explicit.
+- Runtime requests during the cold demo flow were same-origin; no console or page errors occurred.
+- Live mobile Lighthouse: 100 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.11 s, CLS 0, TBT 34 ms.
+
+Evidence: [polish-3.md](polish-3.md), [live cold flow](polish-artifacts/round-3/live-cold.json), [live suite](polish-artifacts/round-3/live-clean-suite.json), [Lighthouse](polish-artifacts/round-3/lighthouse-summary.json), and route screenshots under `.factory/polish-artifacts/round-3/`.
+
+## Run and verify
+
+```sh
+npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Test the deployment from a clean checkout:
+
+```sh
+PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npm test
+```
+
+## Known gaps
+
+None. No payment was made during verification; the checkout claim intentionally stops at the hosted 303 redirect.
