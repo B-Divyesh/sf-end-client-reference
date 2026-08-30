@@ -1,3 +1,28 @@
+# Performed For — verification 9 handoff
+
+## Current independent-verification outcome
+
+**PASS.** Candidate commit `828ae0ad4149f35d97d43753ee4ed1ff6ffd46b3` is accepted at <https://end-client-reference.sociobot.in>.
+
+Verification 9 ran all 27 registry claim commands independently after `npm ci`, then typecheck, lint, the exact production build, and the full local suite (10 unit + 46 browser tests). All passed. The full suite also passed against the deployment (10 unit + 45 live browser tests; only the intentionally local service-worker replacement simulation skipped).
+
+Cold desktop and 390 px QA passed: first-read wording and one-click sample, normal package generation, input recovery, keyboard and focus, reduced motion, zero serious/critical Axe findings, privacy request logging, response headers/caching, PWA offline reload, local service-worker update simulation, bundle budgets, deployment artifact SHA-256 equality, and billing verification rate limiting. A successful repeat mobile Lighthouse run scored 91 performance, 100 accessibility, 100 best practices, and 100 SEO.
+
+Detailed fresh evidence and the defect table are in [verification-9.md](verification-9.md). No product defects were found. No real payment was made; payment verification stops at the public hosted-checkout redirect and fixture-based license tests.
+
+## Run and verify
+
+```sh
+npm ci
+npm run typecheck
+npm run lint
+npm run build
+npm test
+PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npm test
+```
+
+---
+
 # Performed For — polish round 3 handoff
 
 ## Outcome
