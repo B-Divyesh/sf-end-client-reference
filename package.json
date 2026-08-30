@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Local-first invoice relationship cover-sheet generator",
+  "description": "Local-first end-client cover generator for invoice PDFs",
   "scripts": {
     "dev": "vite",
     "build": "npm run typecheck && vite build && node scripts/copy-routes.mjs",

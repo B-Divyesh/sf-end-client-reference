@@ -1,4 +1,4 @@
-# Copy audit — polish 3
+# Copy audit — polish 4
 
 Reviewed 2026-08-30. Counts treat hyphenated terms, paths, prices, filenames, and the version/build string as one word. Every landing-page sentence and standalone interface phrase appears below. No sentence exceeds 22 words. No banned marketing term appears. **Unlock** means the literal paid license.
 
@@ -16,7 +16,7 @@ Reviewed 2026-08-30. Counts treat hyphenated terms, paths, prices, filenames, an
 | Billing client → end client → project | 5 | Literal relationship |
 | Add the end client to every invoice. | 7 | Job headline; `cover-before-invoice` |
 | For subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it. | 17 | Audience and outcome; `cover-before-invoice` |
-| Try it with sample data | 5 | Primary action |
+| Try it with sample data | 5 | Primary action; `demo-one-click` |
 | Use your invoice | 3 | Real first step |
 | The sample opens a completed invoice example in an isolated demo. | 11 | Action result; `demo-isolated` |
 | Runs on your device | 4 | `runs-on-device` |
@@ -104,9 +104,32 @@ Reviewed 2026-08-30. Counts treat hyphenated terms, paths, prices, filenames, an
 | Sample record | 2 | Literal label |
 | Northline Studio → Harbour Arts Council | 6 | Sample relationship |
 
-## README and legal pages
+## README claim wording added in polish 4
 
-Every prose sentence is 22 words or fewer. The review-3 rewrites remove **metadata**, **receipts**, and **taxes** from public claims. Purchase copy now describes only the tested hosted-checkout boundary. The README documents a deployed-site test from a clean checkout without `dist/`.
+| Copy | Words | Result |
+| --- | ---: | --- |
+| Start with the one-click sample demo. | 6 | `demo-one-click` |
+| CSV cells beginning with =, +, -, or @ cannot run spreadsheet formulas. | 12 | `csv-formula-safety` |
+| Text stays at least 16 px, and visible controls stay at least 44 × 44 px on phones. | 17 | `mobile-dimensions` |
+| Privacy, Terms, and the not-found page open directly. | 9 | `direct-routes` |
+| Automated checks find no serious or critical accessibility issues on those pages. | 12 | `automated-accessibility` |
+| Offline reload works. | 3 | `offline-reload` |
+
+Every README and legal-page prose sentence is 22 words or fewer. Purchase copy describes only the tested hosted-checkout boundary. The README documents a deployed-site test from a clean checkout without `dist/`.
+
+## Route metadata and not-found copy
+
+| Copy | Words | Result |
+| --- | ---: | --- |
+| Performed For — add end-client covers to invoices | 7 | Root title and social title; under 60 characters |
+| Add an end-client cover to an existing invoice PDF. | 9 | Root description |
+| Runs on your device. | 4 | Root description; `runs-on-device` |
+| Try adding an end-client cover to a sample invoice PDF. | 10 | Demo description |
+| Sample data stays separate. | 4 | Demo description; `demo-isolated` |
+| Terms for adding end-client covers to invoice PDFs with Performed For. | 11 | Terms description |
+| Choose the workspace to add an end-client cover. | 8 | Not-found recovery instruction |
+
+The phrases **performed-for relationship** and **invoice relationship cover** are absent from current product and metadata sources. Every description uses **end-client cover**.
 
 ## Terminology
 

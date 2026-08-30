@@ -107,7 +107,8 @@ test('announces validation and has no serious accessibility violations', async (
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
 });
 
-test('keeps every page axe-clean and announces an available update', async ({ page }) => {
+test('keeps every page axe-clean and announces an available update @claim:automated-accessibility', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   for (const route of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
     await page.goto(route);
     const results = await new AxeBuilder({ page: page as never }).analyze();
@@ -170,7 +171,7 @@ test('keeps returned license tokens out of initial asset referrers', async ({ br
   }
 });
 
-test('legal routes are direct-loadable and semantic', async ({ page }) => {
+test('legal and not-found routes are direct-loadable and semantic @claim:direct-routes', async ({ page }) => {
   for (const [route, title] of [['/privacy', 'Privacy — Performed For'], ['/terms', 'Terms — Performed For']] as const) {
     await page.goto(route);
     await expect(page.locator('main')).toBeVisible();
@@ -178,8 +179,16 @@ test('legal routes are direct-loadable and semantic', async ({ page }) => {
     expect(await page.locator('html').getAttribute('lang')).toBe('en');
     await expect(page).toHaveTitle(title);
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `https://end-client-reference.sociobot.in${route}`);
-    if (route === '/terms') await expect(page.locator('main')).not.toContainText('while preserving the core local-first workflow');
+    if (route === '/terms') {
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'Terms for adding end-client covers to invoice PDFs with Performed For.');
+      await expect(page.locator('main')).not.toContainText('while preserving the core local-first workflow');
+    }
   }
+  const response = await page.goto('/not-a-product-route');
+  expect(response?.status()).toBe(externalBaseURL ? 404 : 200);
+  await expect(page).toHaveTitle('Page not found — Performed For');
+  await expect(page.getByRole('heading', { name: 'This page does not exist.', level: 1 })).toBeVisible();
+  await expect(page.locator('main')).toContainText('Choose the workspace to add an end-client cover.');
 });
 
 test('uses the standard shell and deployment document for unknown routes', async ({ page }) => {
@@ -194,9 +203,11 @@ test('uses the standard shell and deployment document for unknown routes', async
   if (!externalBaseURL) expect(await readFile('dist/404.html', 'utf8')).toBe(await readFile('dist/index.html', 'utf8'));
 });
 
-test('uses literal product copy and puts the exact free and paid fact on the first screen', async ({ page }) => {
+test('uses literal product copy and puts the exact free and paid fact on the first screen @claim:demo-one-click', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
+  await expect(page).toHaveTitle('Performed For — add end-client covers to invoices');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'Add an end-client cover to an existing invoice PDF. Runs on your device.');
   for (const item of [
     page.getByRole('link', { name: 'Try it with sample data' }),
     page.getByText('The sample opens a completed invoice example in an isolated demo.', { exact: true }),
@@ -215,6 +226,9 @@ test('uses literal product copy and puts the exact free and paid fact on the fir
   await expect(page).toHaveURL('/?demo=1');
   await expect(page.getByText('Demo — sample data, nothing is saved', { exact: true })).toBeVisible();
   await expect(page.locator('#demo-file-name')).toContainText('northline-studio-invoice.pdf');
+  await expect(page.getByLabel('Billing client The company responsible for payment')).toHaveValue('Northline Studio Ltd.');
+  await expect(page.locator('[data-demo-sample-record]')).toContainText('Northline Studio → Harbour Arts Council');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'Try adding an end-client cover to a sample invoice PDF. Sample data stays separate.');
 
   await page.goto('/demo');
   for (const item of [
@@ -718,7 +732,7 @@ test('exports the sample relationship as CSV @claim:csv-export', async ({ page }
   expect(csv).toContain('"HAC-2026-014 · Autumn campaign"');
 });
 
-test('neutralizes every CSV formula prefix without changing the UI or PDF cover text', async ({ page }) => {
+test('neutralizes every CSV formula prefix without changing the UI or PDF cover text @claim:csv-formula-safety', async ({ page }) => {
   await page.goto('/');
   const billingClient = '=HYPERLINK("https://example.invalid","open")';
   const endClient = '+SUM(1,1)';
@@ -927,30 +941,41 @@ test('keeps computed copy at 16px or larger at desktop, 200%-zoom-equivalent 390
   }
 });
 
-test('keeps every visible mobile target at least 44 by 44px and reflows at 320px', async ({ page }) => {
-  for (const path of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(path);
-    if (path === '/') await page.getByText('Have a license?', { exact: true }).click();
-    const tooSmall = await page.evaluate(() => {
-      const selector = 'a[href], button, summary, input:not([type="file"]), label.file-drop, label.button-label, [tabindex="0"]';
-      return Array.from(document.querySelectorAll<HTMLElement>(selector)).flatMap((element) => {
-        const style = getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-        const visible = style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
-        if (!visible || (rect.width >= 44 && rect.height >= 44)) return [];
-        return [{ text: element.textContent?.trim() || element.getAttribute('aria-label') || element.tagName, width: rect.width, height: rect.height }];
+test('keeps text at least 16px and visible phone controls at least 44 by 44px @claim:mobile-dimensions', async ({ page }) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 720 });
+    for (const path of ['/', '/demo', '/privacy', '/terms', '/not-a-product-route']) {
+      await page.goto(path);
+      if (path === '/') await page.getByText('Have a license?', { exact: true }).click();
+      const dimensions = await page.evaluate(() => {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        const undersizedText: Array<{ text: string; fontSize: number }> = [];
+        while (walker.nextNode()) {
+          const textNode = walker.currentNode;
+          if (!textNode.textContent?.trim()) continue;
+          const element = textNode.parentElement;
+          if (!element || element.closest('.sr-only')) continue;
+          const style = getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          if (style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0) continue;
+          const fontSize = Number.parseFloat(style.fontSize);
+          if (fontSize < 16) undersizedText.push({ text: textNode.textContent.trim(), fontSize });
+        }
+        const selector = 'a[href], button, summary, input:not([type="file"]), label.file-drop, label.button-label, [tabindex="0"]';
+        const undersizedControls = Array.from(document.querySelectorAll<HTMLElement>(selector)).flatMap((element) => {
+          const style = getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          const visible = style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+          if (!visible || (rect.width >= 44 && rect.height >= 44)) return [];
+          return [{ text: element.textContent?.trim() || element.getAttribute('aria-label') || element.tagName, width: rect.width, height: rect.height }];
+        });
+        return { undersizedText, undersizedControls, scrollWidth: document.documentElement.scrollWidth };
       });
-    });
-    expect(tooSmall, `${path} has a target smaller than 44px`).toEqual([]);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth), `${path} overflows at 390px`).toBeLessThanOrEqual(390);
+      expect(dimensions.undersizedText, `${path} has text smaller than 16px at ${width}px`).toEqual([]);
+      expect(dimensions.undersizedControls, `${path} has a target smaller than 44px at ${width}px`).toEqual([]);
+      expect(dimensions.scrollWidth, `${path} overflows at ${width}px`).toBeLessThanOrEqual(width);
+    }
   }
-
-  await page.setViewportSize({ width: 320, height: 720 });
-  await page.goto('/');
-  await expect(page.getByRole('link', { name: 'Workspace' })).toBeVisible();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Relationship log' })).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
 test('resets the demo to the original sample @claim:demo-reset', async ({ page }) => {

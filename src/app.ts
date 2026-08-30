@@ -65,7 +65,7 @@ function setPageMetadata(title: string, description: string, path: string): void
 function renderLegal(kind: 'privacy' | 'terms'): void {
   setPageMetadata(
     kind === 'privacy' ? 'Privacy — Performed For' : 'Terms — Performed For',
-    kind === 'privacy' ? 'How Performed For keeps invoice relationship details local to your browser.' : 'Terms for Performed For invoice relationship covers.',
+    kind === 'privacy' ? 'How Performed For keeps invoice and end-client details in your browser.' : 'Terms for adding end-client covers to invoice PDFs with Performed For.',
     `/${kind}`,
   );
   const privacy = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Privacy notice · effective 30 August 2026</p><h1>Privacy, kept local</h1>
@@ -85,7 +85,7 @@ function renderLegal(kind: 'privacy' | 'terms'): void {
 
 function renderNotFound(): void {
   setPageMetadata('Page not found — Performed For', 'The requested Performed For page could not be found.', '/404');
-  app.innerHTML = shell(`<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Page not found</p><h1>This page does not exist.</h1><p>Choose the workspace to prepare an invoice relationship cover.</p><p><a class="link-button" href="/">Open workspace</a></p></main>`);
+  app.innerHTML = shell(`<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Page not found</p><h1>This page does not exist.</h1><p>Choose the workspace to add an end-client cover.</p><p><a class="link-button" href="/">Open workspace</a></p></main>`);
 }
 
 async function createDemoInvoice(): Promise<File> {
@@ -136,8 +136,8 @@ async function renderWorkspace(): Promise<void> {
   setStorageNamespace(isDemo ? 'demo' : '');
   if (!isDemo) captureReturnedLicense();
   setPageMetadata(
-    isDemo ? 'Demo — Performed For' : 'Performed For — invoice relationship covers',
-    isDemo ? 'Try a private invoice relationship cover with isolated sample data.' : 'Add a clear performed-for relationship to any invoice PDF, privately on your device.',
+    isDemo ? 'Demo — Performed For' : 'Performed For — add end-client covers to invoices',
+    isDemo ? 'Try adding an end-client cover to a sample invoice PDF. Sample data stays separate.' : 'Add an end-client cover to an existing invoice PDF. Runs on your device.',
     isDemo ? '/demo' : '/',
   );
   let records: RelationshipRecord[] = [];

@@ -2,7 +2,7 @@
   "id": "/?source=pwa-v1",
   "name": "Performed For",
   "short_name": "Performed For",
-  "description": "Private invoice relationship cover-sheet generator",
+  "description": "Add an end-client cover before an existing invoice PDF",
   "start_url": "/?source=pwa-v1",
   "scope": "/",
   "display": "standalone",

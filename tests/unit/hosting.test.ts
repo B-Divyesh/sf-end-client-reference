@@ -39,4 +39,15 @@ describe('static-host release policy', () => {
     expect(readme).toContain('## Software license');
     expect(readme).not.toMatch(/^## License$/mu);
   });
+
+  it('uses end-client cover wording in every route metadata source', async () => {
+    const entryDocument = await readFile('index.html', 'utf8');
+    const app = await readFile('src/app.ts', 'utf8');
+    const metadataSources = `${entryDocument}\n${app}`;
+    expect(entryDocument).toContain('<title>Performed For — add end-client covers to invoices</title>');
+    expect(entryDocument).toContain('Add an end-client cover to an existing invoice PDF. Runs on your device.');
+    expect(app).toContain('Try adding an end-client cover to a sample invoice PDF. Sample data stays separate.');
+    expect(app).toContain('Terms for adding end-client covers to invoice PDFs with Performed For.');
+    expect(metadataSources).not.toMatch(/performed-for relationship|invoice relationship cover/iu);
+  });
 });

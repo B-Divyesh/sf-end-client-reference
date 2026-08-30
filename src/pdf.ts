@@ -73,7 +73,7 @@ async function coverPng(details: PackageDetails): Promise<Uint8Array> {
   context.fillText('PERFORMED FOR', 100, 116);
   context.fillStyle = '#52645F';
   context.font = '24px Arial, sans-serif';
-  context.fillText('INVOICE RELATIONSHIP COVER', 100, 158);
+  context.fillText('END-CLIENT COVER', 100, 158);
   context.strokeStyle = '#18332F';
   context.lineWidth = 4;
   context.beginPath(); context.moveTo(100, 214); context.lineTo(1140, 214); context.stroke();

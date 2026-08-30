@@ -4,7 +4,7 @@ Add an end-client cover to an existing invoice PDF.
 
 It is for subcontractors and agencies that invoice a billing client but must name the end client and project.
 
-Start with the one-click [sample demo](https://end-client-reference.sociobot.in/demo). Or choose an invoice and enter its billing client, end client, and project reference.
+Start with the one-click [sample demo](https://end-client-reference.sociobot.in/?demo=1). Or choose an invoice and enter its billing client, end client, and project reference.
 
 The download adds one cover before the original invoice pages. The cover says the end client is not liable for payment.
 
@@ -65,11 +65,13 @@ npm run build
 `npm test` checks:
 
 - original invoice pages stay unchanged;
-- CSV cells cannot run spreadsheet formulas;
+- CSV cells beginning with `=`, `+`, `-`, or `@` cannot run spreadsheet formulas;
 - demo data is discarded;
 - saved records can be exported, imported, and deleted;
-- mobile text and controls meet their size limits;
-- routes, accessibility, and offline reload work.
+- text stays at least 16 px, and visible controls stay at least 44 × 44 px on phones;
+- Privacy, Terms, and the not-found page open directly;
+- automated checks find no serious or critical accessibility issues on those pages;
+- offline reload works.
 
 Playwright starts a fresh production preview for PWA checks. The pinned Playwright version is 1.58.2.
 

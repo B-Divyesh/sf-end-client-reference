@@ -7,6 +7,13 @@
     "sandbox": "fresh browser context; seed real data; /demo; generate a distinct sample record; start for real; assert real data is untouched, demo database and counter are deleted, and a new demo contains only its seed"
   },
   {
+    "id": "demo-one-click",
+    "claim": "One click opens a prepared sample invoice",
+    "where": "README opening and landing primary action",
+    "test": "npm test -- --grep @claim:demo-one-click",
+    "sandbox": "fresh 390 px browser context; open /; click Try it with sample data once; assert /?demo=1, the demo banner, sample filename, populated billing client, and sample record"
+  },
+  {
     "id": "original-invoice-intact",
     "claim": "Keeps the original invoice intact",
     "where": "Landing facts, README",
@@ -19,6 +26,13 @@
     "where": "Relationship log action, README",
     "test": "npm test -- --grep @claim:csv-export",
     "sandbox": "fresh browser context; /demo; download and inspect the sample CSV"
+  },
+  {
+    "id": "csv-formula-safety",
+    "claim": "CSV cells beginning with =, +, -, or @ cannot run spreadsheet formulas",
+    "where": "README test coverage",
+    "test": "npm test -- --grep @claim:csv-formula-safety",
+    "sandbox": "fresh browser context; ordinary workspace; generate a record whose exported fields begin with =, +, -, and @; download the CSV; assert every dangerous cell is prefixed as literal text"
   },
   {
     "id": "json-backup",
@@ -47,6 +61,27 @@
     "where": "Landing facts, README",
     "test": "npm test -- --grep @claim:offline-reload",
     "sandbox": "fresh isolated 390 px browser context against a fresh production build and Vite preview; await service-worker activation and controller acquisition; set the context offline; reload to a 200 response; generate and parse the sample PDF without a network"
+  },
+  {
+    "id": "mobile-dimensions",
+    "claim": "Text stays at least 16 px, and visible controls stay at least 44 × 44 px on phones",
+    "where": "README test coverage",
+    "test": "npm test -- --grep @claim:mobile-dimensions",
+    "sandbox": "fresh browser context; check every route at 390 px and at a 320 px 200%-zoom-equivalent reflow width; measure all visible text and interactive controls; assert no horizontal overflow"
+  },
+  {
+    "id": "direct-routes",
+    "claim": "Privacy, Terms, and the not-found page open directly",
+    "where": "README test coverage",
+    "test": "npm test -- --grep @claim:direct-routes",
+    "sandbox": "fresh browser context; directly load /privacy, /terms, and an unknown path; assert route-specific titles, one h1, the main landmark, and the designed not-found state"
+  },
+  {
+    "id": "automated-accessibility",
+    "claim": "Automated checks find no serious or critical accessibility issues on Privacy, Terms, and the not-found page",
+    "where": "README test coverage",
+    "test": "npm test -- --grep @claim:automated-accessibility",
+    "sandbox": "fresh browser context; directly load /privacy, /terms, and an unknown path at 390 px; run Axe and assert no serious or critical findings"
   },
   {
     "id": "runs-on-device",
