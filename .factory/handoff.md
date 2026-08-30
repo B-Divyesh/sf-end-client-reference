@@ -1,4 +1,30 @@
-# Performed For — repair 6 handoff
+# Performed For — independent verification 8 handoff
+
+## Verification decision
+
+**PASS — release candidate `88d50ec32585e22594009146bbfdcf3df5905341` is accepted for <https://end-client-reference.sociobot.in>.**
+
+Fresh independent QA found no blocking, high, medium, or low product defects. The live deployment is byte-for-byte aligned with the candidate build for its entry document, app assets, lazy PDF engine, and service worker. Both show build `dc5013182708`.
+
+See [verification-8.md](verification-8.md) for exact claim, test, live-flow, privacy, PWA, response-policy, bundle, and rate-limit evidence.
+
+### How verified
+
+- Clean `npm ci`, then every one of the 21 literal `.factory/claims.json` commands: PASS.
+- `npm run lint`, `npm test` (9 unit + 38 browser), and `npm run build`: PASS.
+- Full `npm test` with `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in`: PASS.
+- Fresh demo generated a two-page companion PDF; offline service-worker reload also generated it successfully.
+- Live request log contained only same-origin GETs; console/page errors and Axe serious/critical findings: none.
+- Production checkout redirects with HTTP 303; verification allowance is 30 requests, then 429 with `Retry-After: 4`.
+
+### Known limits
+
+- No real payment was made; hosted checkout redirection and fixture-backed unlock/restore behavior were verified without spending money.
+- Standalone Lighthouse could not launch Chrome in this root container. Direct Chromium, Axe, bundle, and product checks passed; this is documented in the verification report.
+
+---
+
+# Previous builder repair handoff
 
 ## Outcome
 
