@@ -18,7 +18,9 @@ The demo banner can reset the original sample. Start for real discards the demo 
 
 Demo records use `demo:performed-for`. Ordinary records use `performed-for`.
 
-Invoice PDFs stay in your browser. The relationship log stores only metadata.
+The selected invoice stays in your browser and is cleared after a successful download.
+
+The relationship log stores client names, references, invoice details, dates, and filenames.
 
 No analytics, third-party scripts, CDN fonts, or cloud document storage are used.
 
@@ -26,7 +28,9 @@ No analytics, third-party scripts, CDN fonts, or cloud document storage are used
 
 Three packages are free. A $19 one-time license enables unlimited packages and saved client suggestions on this device.
 
-You can restore an active license on another device. Checkout and license verification use the Sociobot billing API.
+You can restore an active license on another device. Buying opens Sociobot’s hosted Dodo checkout, where Sociobot/Dodo is the merchant of record.
+
+Use the checkout support link for refund requests. License verification uses the Sociobot billing API.
 
 ## Run locally
 
@@ -71,7 +75,12 @@ Playwright starts a fresh production preview for PWA checks. The pinned Playwrig
 
 `npm run build` type-checks the app and writes it to `dist/`. The output includes direct route files, the 404 page, host settings, and an offline service worker.
 
-Set `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in` to test an already deployed artifact.
+From a clean checkout, test the deployed artifact without a local build:
+
+```sh
+npm ci
+PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npm test
+```
 
 Deploy `dist/` to the configured static host. This repository does not manage DNS or billing registration.
 

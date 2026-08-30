@@ -68,16 +68,16 @@ function renderLegal(kind: 'privacy' | 'terms'): void {
     kind === 'privacy' ? 'How Performed For keeps invoice relationship details local to your browser.' : 'Terms for Performed For invoice relationship covers.',
     `/${kind}`,
   );
-  const privacy = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Privacy notice · effective 28 August 2026</p><h1>Privacy, kept local</h1>
+  const privacy = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Privacy notice · effective 30 August 2026</p><h1>Privacy, kept local</h1>
     <p>Performed For is designed so your invoices and relationship details stay on your device.</p>
-    <h2>What the app stores</h2><p>Billing clients, end clients, references, optional invoice metadata, source filenames, and dates are stored in your browser’s IndexedDB. Your attached invoice PDF is read in memory to make the download and is not retained. License tokens and a generation count are stored in localStorage.</p>
-    <h2>What leaves your device</h2><p>Nothing during ordinary cover generation. When you buy or verify an unlock, your browser connects to the Sociobot billing API and sends the license token for verification. Checkout is hosted by Sociobot/Dodo, the merchant of record. We run no behavioral analytics or advertising trackers.</p>
+    <h2>What the app stores</h2><p>Billing clients, end clients, project references, invoice numbers, service periods, source filenames, and dates are stored in your browser’s IndexedDB. Your attached invoice PDF is read in memory. After a successful download, the selection is cleared. License tokens and a generation count are stored in localStorage.</p>
+    <h2>What leaves your device</h2><p>Nothing during ordinary cover generation. Buying opens Sociobot’s hosted Dodo checkout, where Sociobot/Dodo is the merchant of record. License verification sends the token to the Sociobot billing API. We run no behavioral analytics or advertising trackers.</p>
     <h2>Your controls</h2><p>Use Backup JSON and Export CSV to take your data with you. Delete individual entries in the relationship log. Clearing this site’s browser data removes all locally stored records and the license token from this device.</p>
     <h2>Contact</h2><p>Privacy questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`;
-  const terms = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Terms notice · effective 28 August 2026</p><h1>Terms of use</h1>
+  const terms = `<main id="main" class="legal" tabindex="-1"><p class="eyebrow">Terms notice · effective 30 August 2026</p><h1>Terms of use</h1>
     <p>Performed For creates a companion cover page from details you supply and combines it with an existing PDF. It does not issue invoices, provide accounting or legal advice, or change who owes payment.</p>
     <h2>Your responsibility</h2><p>You must have permission to process the invoice and client details you enter. Review every generated package before sending it. The billing client remains the payer; naming an end client never makes that end client liable.</p>
-    <h2>One-time unlock</h2><p>The ${esc(LICENSE_PRICE)} one-time purchase unlocks unlimited package generation and saved client suggestions for this product. Sociobot/Dodo is the merchant of record. Checkout, receipts, taxes, and refunds are handled there. A refunded or revoked purchase deactivates its license. You can restore an active license on another device.</p>
+    <h2>One-time unlock</h2><p>The ${esc(LICENSE_PRICE)} one-time purchase unlocks unlimited package generation and saved client suggestions for this product. Buying opens Sociobot’s hosted Dodo checkout, where Sociobot/Dodo is the merchant of record. Use its support link for refund requests. A refunded or revoked purchase deactivates its license. You can restore an active license on another device.</p>
     <h2>Availability and warranty</h2><p>The software is provided “as is” without warranties. Keep your own copies of invoices, downloads, and data backups. We may update the app for security or compatibility.</p>
     <h2>Contact</h2><p>Questions can be sent to <a href="mailto:support@sociobot.in">support@sociobot.in</a>.</p></main>`;
   app.innerHTML = shell(kind === 'privacy' ? privacy : terms);
@@ -110,7 +110,7 @@ function toast(message: string, tone: 'normal' | 'error' = 'normal'): void {
 }
 
 function recordRows(records: RelationshipRecord[]): string {
-  if (!records.length) return `<div class="empty-state"><span aria-hidden="true">◎</span><h3>No relationships logged yet</h3><p>Your first generated package will add its relationship here. Only metadata is saved—never the invoice PDF.</p></div>`;
+  if (!records.length) return `<div class="empty-state"><span aria-hidden="true">◎</span><h3>No relationships logged yet</h3><p>Your first generated package will add its relationship here. Only client names, references, dates, and filenames are saved—not the invoice PDF.</p></div>`;
   return `<div class="table-scroll" tabindex="0" aria-label="Scrollable relationship records"><table>
     <thead><tr><th>Date</th><th>Billing client</th><th>End client</th><th>Reference</th><th>Actions</th></tr></thead>
     <tbody>${records.map((record) => `<tr>
@@ -185,7 +185,7 @@ async function renderWorkspace(): Promise<void> {
       <p class="notice offline-notice" id="offline-notice" hidden><strong>Offline.</strong> The workspace and your records still work; license checks will resume when connected.</p>
       <form id="package-form" class="${isDemo ? 'demo-form' : ''}" novalidate>
         <fieldset class="source-fieldset"><legend><span>${isDemo ? '02' : '01'}</span> Source invoice</legend>
-          <label class="file-drop" for="invoice-file"><strong>Choose the existing invoice PDF</strong><span id="file-help">PDF only · up to 25 MB · read locally, never retained</span><input id="invoice-file" name="invoice" type="file" accept="application/pdf,.pdf" aria-describedby="file-help file-error" ${isDemo ? '' : 'required'}><span class="file-name" id="file-name">No file selected</span></label>
+          <label class="file-drop" for="invoice-file"><strong>Choose the existing invoice PDF</strong><span id="file-help">PDF only · up to 25 MB · cleared after a successful download</span><input id="invoice-file" name="invoice" type="file" accept="application/pdf,.pdf" aria-describedby="file-help file-error" ${isDemo ? '' : 'required'}><span class="file-name" id="file-name">No file selected</span></label>
           <p class="field-error" id="file-error" aria-live="polite"></p>
         </fieldset>
         <fieldset class="relationship-fieldset"><legend><span>${isDemo ? '01' : '02'}</span> Relationship</legend>
@@ -204,13 +204,13 @@ async function renderWorkspace(): Promise<void> {
       </form>
     </section>
 
-    <section class="privacy-scope" aria-labelledby="privacy-scope-title"><p class="eyebrow">Privacy and limits</p><h2 id="privacy-scope-title">What stays on this device</h2><p>Invoice PDFs are read to make a download, then discarded. Only client relationship details are saved in your browser.</p><p>Performed For does not issue invoices or change who owes payment. The billing client remains the payer.</p></section>
+    <section class="privacy-scope" aria-labelledby="privacy-scope-title"><p class="eyebrow">Privacy and limits</p><h2 id="privacy-scope-title">What stays on this device</h2><p>The selected PDF stays in this tab until a successful download, then it is cleared. It is never uploaded or added to the relationship log.</p><p>Only client names, references, dates, and filenames are saved in your browser. Performed For does not issue invoices or change who owes payment.</p><p>The billing client remains the payer.</p></section>
 
     <section class="license-panel" aria-labelledby="license-title"><div><p class="eyebrow">${isDemo ? 'Sample invoice' : 'One-time license'}</p><h2 id="license-title">${isDemo ? 'Try a complete invoice example.' : 'Generate unlimited packages.'}</h2><p>${isDemo ? 'The sample invoice and relationship log are separate from your own data. Start for real when you are ready to use an invoice.' : `Three packages are free. Pay ${esc(LICENSE_PRICE)} once for unlimited packages and saved client suggestions. Restore an active license on another device.`}</p><p class="license-notice" id="license-notice" aria-live="polite"></p></div>
-      <div class="license-actions">${isDemo ? '<a class="primary link-button start-real" href="/">Start for real</a>' : `<a class="primary link-button" href="${BUY_URL}">Buy the one-time unlock</a><details><summary>Have a license?</summary><form id="restore-form"><label for="license-token">Paste license token</label><div class="inline-field"><input id="license-token" autocomplete="off" required><button type="submit" aria-label="Verify pasted license token">Verify license</button></div></form></details>`}</div>
+      <div class="license-actions">${isDemo ? '<a class="primary link-button start-real" href="/">Start for real</a>' : `<a class="primary link-button" href="${BUY_URL}" rel="external" aria-label="Buy the one-time unlock — opens the hosted Sociobot checkout">Buy the one-time unlock</a><small id="checkout-note">Opens the hosted Sociobot checkout.</small><details><summary>Have a license?</summary><form id="restore-form"><label for="license-token">Paste license token</label><div class="inline-field"><input id="license-token" autocomplete="off" required><button type="submit" aria-label="Verify pasted license token">Verify license</button></div></form></details>`}</div>
     </section>
 
-    <section class="records" id="records" aria-labelledby="records-title"><div class="section-heading"><div><p class="eyebrow">Saved on this device</p><h2 id="records-title">Relationship log</h2></div><div class="record-actions"><button id="export-csv" type="button">Export CSV</button><button id="backup-json" type="button">Backup JSON</button><label class="button-label">Import JSON<input id="import-json" class="sr-only" type="file" accept="application/json,.json"></label></div></div>
+    <section class="records" id="records" aria-labelledby="records-title"><div class="section-heading"><div><p class="eyebrow">Saved on this device</p><h2 id="records-title" tabindex="-1">Relationship log</h2></div><div class="record-actions"><button id="export-csv" type="button">Export CSV</button><button id="backup-json" type="button">Backup JSON</button><label class="button-label">Import JSON<input id="import-json" class="sr-only" type="file" accept="application/json,.json"></label></div></div>
       ${invalidRecordCount ? `<div class="notice error recovery-notice" id="record-recovery" role="status"><div><strong>${invalidRecordCount} unreadable relationship record${invalidRecordCount === 1 ? ' was' : 's were'} skipped.</strong><span>Your valid records and saved license are unchanged.</span></div><button id="remove-invalid-records" type="button">Remove only unreadable records</button></div>` : ''}
       <div id="record-list">${recordRows(records)}</div></section>
   </main>`);
@@ -313,10 +313,16 @@ async function renderWorkspace(): Promise<void> {
       // count and relationship first so consumers never see a half-finished
       // package state when the browser emits its download event.
       downloadBlob(new Blob([bytes as BlobPart], { type: 'application/pdf' }), `${safeFilename(invoiceLabel)}-performed-for.pdf`);
+      selectedFile = null;
+      if (fileInput) fileInput.value = '';
+      const selectedName = document.querySelector('#file-name');
+      if (selectedName) selectedName.textContent = 'No file selected';
+      const demoFileName = document.querySelector('#demo-file-name');
+      if (demoFileName) demoFileName.textContent = `${DEMO_DETAILS.sourceFileName} · cleared after download`;
       toast(
         recordSaved
-          ? 'Package ready. The cover and original invoice were downloaded together.'
-          : 'Package downloaded, but its relationship could not be added to local storage.',
+          ? 'Package ready. The selected invoice was cleared after download.'
+          : 'Package downloaded and cleared, but its relationship could not be saved.',
         recordSaved ? 'normal' : 'error',
       );
     } catch (error) {
@@ -399,6 +405,8 @@ async function renderRoute(options: { restore?: RouteState; focusHeading?: boole
       scrollTo(options.restore.scrollX ?? 0, options.restore.scrollY ?? 0);
       const control = options.restore.focusId ? document.getElementById(options.restore.focusId) : null;
       (control ?? heading)?.focus({ preventScroll: true });
+    } else if (location.hash) {
+      focusHashTarget();
     } else if (options.focusHeading) {
       scrollTo(0, 0);
       heading?.focus({ preventScroll: true });
@@ -406,10 +414,43 @@ async function renderRoute(options: { restore?: RouteState; focusHeading?: boole
   });
 }
 
+function focusHashTarget(): boolean {
+  let id: string;
+  try { id = decodeURIComponent(location.hash.slice(1)); }
+  catch { return false; }
+  const target = id ? document.getElementById(id) : null;
+  if (!target) return false;
+  const focusTarget = id === 'records'
+    ? document.getElementById('records-title') as HTMLElement | null
+    : target;
+  target.scrollIntoView({ block: 'start', behavior: 'instant' });
+  if (focusTarget) {
+    if (!focusTarget.hasAttribute('tabindex')) focusTarget.tabIndex = -1;
+    focusTarget.focus({ preventScroll: true });
+    const announcer = document.querySelector<HTMLElement>('#route-announcer');
+    if (announcer) announcer.textContent = focusTarget.textContent?.trim() || document.title;
+  }
+  return true;
+}
+
 async function navigate(destination: URL, trigger?: HTMLElement): Promise<void> {
   const current = new URL(location.href);
   if (destination.pathname === current.pathname && destination.search === current.search) {
-    if (destination.hash) document.querySelector(destination.hash)?.scrollIntoView();
+    if (destination.hash === current.hash) {
+      focusHashTarget();
+      return;
+    }
+    saveRouteState(trigger ? controlId(trigger) : undefined);
+    history.pushState({}, '', `${destination.pathname}${destination.search}${destination.hash}`);
+    if (destination.hash) {
+      focusHashTarget();
+    } else {
+      scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      const heading = document.querySelector<HTMLElement>('h1');
+      heading?.focus({ preventScroll: true });
+      const announcer = document.querySelector<HTMLElement>('#route-announcer');
+      if (announcer && heading) announcer.textContent = heading.textContent?.trim() || document.title;
+    }
     return;
   }
   saveRouteState(trigger ? controlId(trigger) : undefined);
@@ -432,7 +473,12 @@ export async function startApp(): Promise<void> {
     const anchor = (event.target as Element).closest<HTMLAnchorElement>('a[href]');
     if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
     const destination = new URL(anchor.href, location.href);
-    if (destination.origin === location.origin && destination.pathname !== location.pathname) {
+    if (destination.origin === location.origin && (
+      destination.pathname !== location.pathname
+      || destination.search !== location.search
+      || destination.hash !== location.hash
+      || Boolean(destination.hash)
+    )) {
       event.preventDefault();
       void navigate(destination, anchor);
     }

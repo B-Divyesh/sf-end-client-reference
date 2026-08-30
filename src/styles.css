@@ -123,6 +123,7 @@ input:user-invalid { border-color: var(--danger); }
 .license-panel .eyebrow { color: #ffd0c7; }
 .license-panel p { max-width: 56ch; color: #e7eee9; }
 .license-actions { display: grid; align-content: center; gap: 14px; }
+.license-actions > small { color: #e7eee9; font-size: 16px; }
 .link-button { display: inline-flex; align-items: center; justify-content: center; padding: 11px 18px; border: 1px solid var(--sheet); background: var(--sheet); color: var(--forest); font-weight: 800; text-align: center; text-decoration: none; }
 .link-button:hover { color: var(--sheet); background: transparent; }
 details { border-top: 1px solid rgb(255 255 255 / 35%); }

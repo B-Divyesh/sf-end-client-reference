@@ -69,6 +69,7 @@ test('reloads and generates a package offline from a fresh production visit @cla
 });
 
 test('installs a changed service worker and announces the update', async ({ browser }) => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'A deployed service worker cannot be replaced by the test runner.');
   const originalWorker = await readFile('dist/sw.js', 'utf8');
   const updatedWorker = originalWorker.replace(/const VERSION = '([^']+)'/, "const VERSION = '$1-update'");
   let serveUpdate = false;

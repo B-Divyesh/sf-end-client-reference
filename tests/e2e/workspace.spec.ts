@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import { PDFArray, PDFDocument, PDFStream, StandardFonts } from 'pdf-lib';
 import { readFile } from 'node:fs/promises';
 
+const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL;
+
 async function invoiceBuffer(): Promise<Buffer> {
   const document = await PDFDocument.create();
   document.addPage([400, 500]);
@@ -181,14 +183,15 @@ test('legal routes are direct-loadable and semantic', async ({ page }) => {
 });
 
 test('uses the standard shell and deployment document for unknown routes', async ({ page }) => {
-  await page.goto('/not-a-product-route');
+  const response = await page.goto('/not-a-product-route');
+  expect(response?.status()).toBe(externalBaseURL ? 404 : 200);
   await expect(page.getByRole('heading', { name: 'This page does not exist.' })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Performed For');
   await expect(page.locator('header')).toBeVisible();
   await expect(page.locator('nav')).toBeVisible();
   await expect(page.locator('footer')).toContainText(/v1\.0\.0 · build [a-f0-9]{12}/);
   await expect(page.locator('footer')).toContainText('Performed For adds an end-client cover to an existing invoice PDF.');
-  expect(await readFile('dist/404.html', 'utf8')).toBe(await readFile('dist/index.html', 'utf8'));
+  if (!externalBaseURL) expect(await readFile('dist/404.html', 'utf8')).toBe(await readFile('dist/index.html', 'utf8'));
 });
 
 test('uses literal product copy and puts the exact free and paid fact on the first screen', async ({ page }) => {
@@ -255,6 +258,39 @@ test('restores scroll position and the triggering control after Back navigation'
   await expect(page.locator('#nav-privacy')).toBeVisible();
 });
 
+test('opens and announces the relationship log from deep links and every route', async ({ page }) => {
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/#records');
+    await expect(page).toHaveURL('/#records');
+    await expect(page.locator('#records-title')).toBeFocused();
+    await expect(page.locator('#route-announcer')).toHaveText('Relationship log');
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(100);
+    const directBox = await page.locator('#records-title').boundingBox();
+    expect(directBox?.y).toBeGreaterThanOrEqual(0);
+    expect((directBox?.y ?? viewport.height) + (directBox?.height ?? 0)).toBeLessThanOrEqual(viewport.height);
+
+    await page.goto('/');
+    await page.getByRole('navigation').getByRole('link', { name: 'Relationship log', exact: true }).click();
+    await expect(page).toHaveURL('/#records');
+    await expect(page.locator('#records-title')).toBeFocused();
+
+    for (const source of ['/privacy', '/demo']) {
+      await page.goto(source);
+      await page.getByRole('navigation').getByRole('link', { name: 'Relationship log', exact: true }).click();
+      await expect(page).toHaveURL('/#records');
+      await expect(page.locator('#records-title')).toBeFocused();
+      await expect(page.locator('#route-announcer')).toHaveText('Relationship log');
+      await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(100);
+
+      await page.goBack();
+      await expect(page).toHaveURL(source);
+      await expect(page.locator('#nav-records')).toBeFocused();
+      await expect(page.locator('#nav-records')).toBeVisible();
+    }
+  }
+});
+
 test('adds the relationship cover before every original page @claim:cover-before-invoice', async ({ page }) => {
   await page.goto('/demo');
   await page.evaluate(() => {
@@ -281,6 +317,25 @@ test('adds the relationship cover before every original page @claim:cover-before
   const coverText = await page.evaluate(() => (window as Window & { __coverText?: string[] }).__coverText ?? []);
   expect(coverText.join(' ')).toContain('Harbour Arts Council');
   expect(coverText.join(' ')).toContain('HAC-2026-014 · Autumn campaign');
+});
+
+test('clears the selected invoice after a successful download @claim:invoice-cleared-after-download', async ({ page }) => {
+  await page.goto('/');
+  const input = page.locator('#invoice-file');
+  await input.setInputFiles({ name: 'sensitive-client-invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  await page.getByLabel('Billing client The company responsible for payment').fill('Sensitive Billing Client');
+  await page.getByLabel('End client The customer receiving the work; not the payer').fill('Sensitive End Client');
+  await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('SENSITIVE-1');
+  expect(await input.evaluate((element: HTMLInputElement) => element.files?.length)).toBe(1);
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await download;
+  await expect(input).toHaveValue('');
+  expect(await input.evaluate((element: HTMLInputElement) => element.files?.length)).toBe(0);
+  await expect(page.locator('#file-name')).toHaveText('No file selected');
+  await expect(page.locator('#toast')).toContainText('selected invoice was cleared');
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await expect(input).toBeFocused();
 });
 
 test('keeps a generated relationship in the demo log after reload @claim:relationship-log', async ({ page }) => {
@@ -589,11 +644,12 @@ test('accepts 25 MiB PDFs and rejects larger files @claim:pdf-size-limit', async
 
 test('allows three free packages and blocks the fourth @claim:three-free-packages', async ({ page }) => {
   await page.goto('/');
-  await page.locator('#invoice-file').setInputFiles({ name: 'free-invoice.pdf', mimeType: 'application/pdf', buffer: await invoiceBuffer() });
+  const invoice = await invoiceBuffer();
   await page.getByLabel('Billing client The company responsible for payment').fill('Free Prime');
   await page.getByLabel('End client The customer receiving the work; not the payer').fill('Free End Client');
   await page.getByLabel('Project / PO reference Preserved exactly as entered').fill('FREE-BOUNDARY');
   for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.locator('#invoice-file').setInputFiles({ name: 'free-invoice.pdf', mimeType: 'application/pdf', buffer: invoice });
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Generate package' }).click();
     await downloadPromise;
@@ -601,6 +657,7 @@ test('allows three free packages and blocks the fourth @claim:three-free-package
     await expect(page.locator('#license-badge')).toHaveText(`${2 - attempt} free packages left`);
   }
   expect(await page.evaluate(() => localStorage.getItem('pf_generation_count'))).toBe('3');
+  await page.locator('#invoice-file').setInputFiles({ name: 'free-invoice.pdf', mimeType: 'application/pdf', buffer: invoice });
   await page.getByRole('button', { name: 'Generate package' }).click();
   await expect(page.locator('#form-error')).toHaveText('You’ve used the 3 free packages. Restore or buy the one-time unlock to keep generating.');
 });
@@ -947,8 +1004,30 @@ test('uses only the Sociobot billing API for checkout and verification @claim:bi
   await page.getByLabel('Paste license token').fill('billing-api-fixture');
   await page.getByRole('button', { name: 'Verify pasted license token' }).click();
   expect(requests).toEqual(['https://api.sociobot.in/api/v1/products/end-client-reference/verify?license=billing-api-fixture']);
-  const assets = await Promise.all((await (await import('node:fs/promises')).readdir('dist/assets')).filter((name) => name.endsWith('.js')).map((name) => readFile(`dist/assets/${name}`, 'utf8')));
+  const assets = await page.locator('script[src]').evaluateAll(async (scripts) => Promise.all(scripts.map(async (script) => {
+    const response = await fetch((script as HTMLScriptElement).src);
+    return response.text();
+  })));
   expect(assets.join('\n')).not.toMatch(/stripe|paypal|braintree|checkout\.dodopayments/iu);
+});
+
+test('opens the disclosed hosted checkout without starting a purchase @claim:hosted-checkout', async ({ page, request }) => {
+  await page.goto('/');
+  const checkout = page.getByRole('link', { name: 'Buy the one-time unlock — opens the hosted Sociobot checkout', exact: true });
+  await expect(checkout).toBeVisible();
+  await expect(checkout).toHaveAttribute('rel', 'external');
+  await expect(checkout).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/end-client-reference/checkout');
+  await expect(page.getByText('Opens the hosted Sociobot checkout.', { exact: true })).toBeVisible();
+
+  const response = await request.get('https://api.sociobot.in/api/v1/products/end-client-reference/checkout', { maxRedirects: 0 });
+  expect(response.status()).toBe(303);
+  expect(response.headers().location).toMatch(/^https:\/\/checkout\.dodopayments\.com\/session\//u);
+
+  for (const path of ['/privacy', '/terms']) {
+    await page.goto(path);
+    await expect(page.locator('main')).toContainText('Sociobot/Dodo is the merchant of record');
+    await expect(page.locator('main')).not.toContainText('receipts, taxes, and refunds are handled there');
+  }
 });
 
 test('states that the end client is not the payer in the workspace and cover @claim:end-client-not-payer', async ({ page }) => {

@@ -70,6 +70,13 @@
     "sandbox": "fresh browser context; /demo; generate sample package; assert every request is same-origin GET"
   },
   {
+    "id": "invoice-cleared-after-download",
+    "claim": "The selected invoice PDF is cleared from the tab after a successful download",
+    "where": "Invoice file help, privacy section, privacy notice, README",
+    "test": "npm test -- --grep @claim:invoice-cleared-after-download",
+    "sandbox": "fresh browser context; ordinary workspace; select a named PDF; generate and await the download; assert the input and selection UI are empty, then assert another generation requires choosing the PDF again"
+  },
+  {
     "id": "one-time-unlock",
     "claim": "A $19 one-time purchase unlocks unlimited packages",
     "where": "License panel, README",
@@ -110,6 +117,13 @@
     "where": "README, terms",
     "test": "npm test -- --grep @claim:billing-api-only",
     "sandbox": "fresh browser context; fixture-verify a pasted token, inspect the checkout URL and captured request origin, and inspect built JavaScript for no payment-provider endpoint"
+  },
+  {
+    "id": "hosted-checkout",
+    "claim": "Buying opens Sociobot's hosted Dodo checkout, where Sociobot/Dodo is the merchant of record",
+    "where": "License action, privacy notice, terms",
+    "test": "npm test -- --grep @claim:hosted-checkout",
+    "sandbox": "fresh browser context; assert the purchase link discloses its external hosted destination; request the public product checkout without following it or purchasing; assert the 303 Dodo checkout location and legal wording"
   },
   {
     "id": "end-client-not-payer",
