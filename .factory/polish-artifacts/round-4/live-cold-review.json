@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-08-30T08:21:42.069Z",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "normalFlowErrors": [],
+  "root": {
+    "title": "Performed For — add end-client covers to invoices",
+    "description": "Add an end-client cover to an existing invoice PDF. Runs on your device.",
+    "h1": "Add the end client to every invoice.",
+    "ctaBottom": 528.140625,
+    "lowestFactBottom": 782.921875
+  },
+  "oneClickCount": 1,
+  "demo": {
+    "url": "https://end-client-reference.sociobot.in/?demo=1",
+    "title": "Demo — Performed For",
+    "description": "Try adding an end-client cover to a sample invoice PDF. Sample data stays separate.",
+    "banner": "Demo — sample data, nothing is saved",
+    "filename": "northline-studio-invoice.pdf · ready",
+    "billingClient": "Northline Studio Ltd.",
+    "sampleRecord": "Sample recordNorthline Studio → Harbour Arts Council"
+  },
+  "reset": {
+    "endClient": "Harbour Arts Council",
+    "rows": 1,
+    "message": "Demo reset to its sample invoice."
+  },
+  "routeChecks": [
+    {
+      "path": "/privacy",
+      "status": 200,
+      "title": "Privacy — Performed For",
+      "h1": "Privacy, kept local",
+      "description": "How Performed For keeps invoice and end-client details in your browser.",
+      "seriousOrCritical": 0
+    },
+    {
+      "path": "/terms",
+      "status": 200,
+      "title": "Terms — Performed For",
+      "h1": "Terms of use",
+      "description": "Terms for adding end-client covers to invoice PDFs with Performed For.",
+      "seriousOrCritical": 0
+    },
+    {
+      "path": "/does-not-exist-round-4",
+      "status": 404,
+      "title": "Page not found — Performed For",
+      "h1": "This page does not exist.",
+      "description": "The requested Performed For page could not be found.",
+      "seriousOrCritical": 0
+    }
+  ],
+  "mobile": {
+    "minTextPx": 16,
+    "minControlWidth": 51.125,
+    "minControlHeight": 44,
+    "scrollWidth": 320
+  }
+}
