@@ -1,21 +1,39 @@
-# Performed For — adversarial review 1 handoff
+# Performed For — polish 1 handoff
 
-## Outcome
+## Released repair
 
-**FAIL.** Review 1 is in [`.factory/review-1.md`](review-1.md). No product code was changed.
+Product repair commit: `f52ce7a0be883adae70c5236103b2d15d4805b70`.
 
-The review records 18 findings: 2 blocking, 7 high, 6 medium, and 3 minor. The main blockers are that `/demo` shows the repeated marketing hero instead of sample product use in its first viewport, and Back navigation loses the previous scroll position and focus.
+It fixes every finding F-1-1 through F-1-18 from `.factory/review-1.md`: demo-first isolated workspace, sticky reset/start banner, history scroll/focus restoration, first-screen mobile facts, claim registry coverage, plain wording, privacy scope, accessible table header, manifest MIME, and 180 px Apple icon.
 
-## Verification performed
+Static deployment: `f75c0db0-c615-4a49-a518-75ceb4521b6c` to <https://end-client-reference.sociobot.in>. The deployed route check was cold-run after upload.
 
-- Opened the live site cold in fresh Chromium contexts at 390 × 844 and 1440 × 900.
-- Exercised live demo generation, Reset, Start for real, real/demo storage isolation, and re-entry.
-- Recorded live requests through the full demo flow; all were same-origin GETs.
-- Crawled internal links and followed the billing checkout redirect to its hosted 200 page.
-- Checked route titles, metadata, h1/main/lang, 404, focus, Back behavior, touch targets, reduced motion, and axe results.
-- Ran all 15 literal `.factory/claims.json` commands independently after `npm ci` in a detached clean worktree; all passed.
-- Ran `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`; all passed. The suite reported 9 unit and 29 Chromium tests, and `dist/` was produced.
+## How to run
 
-## Known gaps / next steps
+```sh
+npm ci
+npm run dev
+```
 
-Implement findings F-1-1 through F-1-18 in order, add claim coverage for every unlisted public promise, and rerun the entire cold-read review. The previous handoff’s empty table header and manifest MIME issue remain open as F-1-16 and F-1-17.
+For production PWA behavior:
+
+```sh
+npm test
+npm run build
+npm run preview
+```
+
+Open `/demo` or `/?demo=1` for the isolated Northline Studio sample. **Reset demo** restores it; **Start for real** deletes only the demo namespace.
+
+## Exact verification evidence
+
+- Fresh clone at `f52ce7a`: `npm ci` passed; every one of the 21 literal commands in `.factory/claims.json` passed independently; `npm audit --audit-level=high` found 0 vulnerabilities.
+- Fresh clone: `npm run lint`, `npm run typecheck`, `npm test` (9 Vitest + 35 Playwright), `npm run build`, and `git diff --check` passed.
+- Local production preview: `/opt/fleet/lib/verify-url.sh` passed `/` and `/demo`; Playwright Axe integration passed all app routes with no serious or critical violations.
+- Live after deploy: `verify-url.sh` passed `/`, `/demo`, `/privacy`, and `/terms`; a complete `PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npx playwright test` rerun passed 35/35.
+- Live `GET /manifest.webmanifest` returns `Content-Type: application/manifest+json`; recorded in `.factory/polish-artifacts/live-manifest-headers.txt`.
+- Live screenshots and JSON verification reports are in `.factory/polish-artifacts/live-*`. Finding-by-finding mapping is in `.factory/polish-1.md`.
+
+## Known gaps
+
+None. The standalone `@axe-core/cli` could not start Chrome in this container; the required Axe coverage was completed through the repository’s Playwright Axe integration instead.
