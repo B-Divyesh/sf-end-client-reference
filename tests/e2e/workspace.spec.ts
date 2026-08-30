@@ -204,6 +204,13 @@ test('uses literal product copy and puts the exact free and paid fact on the fir
     expect((box?.y ?? 844) + (box?.height ?? 0)).toBeLessThanOrEqual(844);
   }
 
+  const sampleAction = page.getByRole('link', { name: 'Try it with sample data' });
+  await expect(sampleAction).toHaveAttribute('href', '/?demo=1');
+  await sampleAction.click();
+  await expect(page).toHaveURL('/?demo=1');
+  await expect(page.getByText('Demo — sample data, nothing is saved', { exact: true })).toBeVisible();
+  await expect(page.locator('#demo-file-name')).toContainText('northline-studio-invoice.pdf');
+
   await page.goto('/demo');
   for (const item of [
     page.getByText('Demo — sample data, nothing is saved', { exact: true }),

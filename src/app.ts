@@ -166,7 +166,7 @@ async function renderWorkspace(): Promise<void> {
   const landingHero = `<section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy"><p class="eyebrow">Billing client → end client → project</p><h1 id="hero-title">Add the end client to every invoice.</h1>
         <p class="lede">For subcontractors and white-label agencies, add a clear cover to an existing invoice PDF before sending it.</p>
-        <div class="hero-actions"><a class="primary link-button" href="/demo">Try it with sample data</a><a class="secondary-action" href="#workspace-title">Use your invoice</a></div>
+        <div class="hero-actions"><a class="primary link-button" href="/?demo=1">Try it with sample data</a><a class="secondary-action" href="#workspace-title">Use your invoice</a></div>
         <p class="action-note">The sample opens a completed invoice example in an isolated demo.</p>
         <ul class="trust-list"><li>Runs on your device</li><li>Keeps the original invoice intact</li><li>Works offline after first visit</li><li>Three packages free · ${esc(LICENSE_PRICE)} once</li></ul>
       </div>
