@@ -26,4 +26,17 @@ describe('static-host release policy', () => {
     expect(playwrightConfig).toContain("command: 'npm run build && npm run preview -- --port 4173'");
     expect(playwrightConfig).toContain('reuseExistingServer: false');
   });
+
+  it('ships the required 180px touch icon and distinct README license headings', async () => {
+    const icon = await readFile('public/icons/apple-touch-icon.png');
+    expect(icon.subarray(1, 4).toString()).toBe('PNG');
+    expect(icon.readUInt32BE(16)).toBe(180);
+    expect(icon.readUInt32BE(20)).toBe(180);
+    const entryDocument = await readFile('index.html', 'utf8');
+    expect(entryDocument).toContain('rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180"');
+    const readme = await readFile('README.md', 'utf8');
+    expect(readme).toContain('## Price and unlock');
+    expect(readme).toContain('## Software license');
+    expect(readme).not.toMatch(/^## License$/mu);
+  });
 });

@@ -176,6 +176,7 @@ test('legal routes are direct-loadable and semantic', async ({ page }) => {
     expect(await page.locator('html').getAttribute('lang')).toBe('en');
     await expect(page).toHaveTitle(title);
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `https://end-client-reference.sociobot.in${route}`);
+    if (route === '/terms') await expect(page.locator('main')).not.toContainText('while preserving the core local-first workflow');
   }
 });
 
@@ -186,6 +187,7 @@ test('uses the standard shell and deployment document for unknown routes', async
   await expect(page.locator('header')).toBeVisible();
   await expect(page.locator('nav')).toBeVisible();
   await expect(page.locator('footer')).toContainText(/v1\.0\.0 · build [a-f0-9]{12}/);
+  await expect(page.locator('footer')).toContainText('Performed For adds an end-client cover to an existing invoice PDF.');
   expect(await readFile('dist/404.html', 'utf8')).toBe(await readFile('dist/index.html', 'utf8'));
 });
 
