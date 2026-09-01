@@ -1,27 +1,21 @@
-# Performed For — verification 10 handoff
+# Performed For — adversarial review 5 handoff
 
 ## Outcome
 
-**PASS.** Candidate `8654d653c28dc316ca10b5d3f2ec0befd8e69fa8` was independently verified on 2026-09-01 against <https://end-client-reference.sociobot.in>. No product code was changed and no defect was found.
+**PASS.** Review 5 found zero blocking, major, minor, or untested-claim findings against commit `59d646eb113934dc553c1d6d6dfd9c35c184d8f5` and <https://end-client-reference.sociobot.in>.
 
-The deployed site is the candidate product build: the live and local artifacts report `v1.0.0 · build fe53243b55e5`, and every publicly served production file matches byte-for-byte.
+No product code was modified. The review is recorded in [review-5.md](review-5.md).
 
-## Verification summary
+## Verification
 
-- Cold first-read passed on desktop and 390 px mobile; the audience, job, first action, and one-click sample are explicit.
-- All 32 commands in `.factory/claims.json` passed independently after the clean install.
-- `npm ci`, high-severity dependency audit, lint, type-check, full local test suite, and production build passed.
-- Local full suite: 11 unit tests and 46 Chromium tests passed.
-- Live full suite: 45 Chromium tests passed; the one expected skip is the local-only changed-worker simulation, which passed locally.
-- Live sample generation produced a valid two-page PDF and retained the exact relationship locally.
-- Invalid input, malformed PDF/backup, 25 MiB boundary, three-free-package boundary, export/import, deletion, and license states passed.
-- All live demo-flow requests were same-origin GETs; no console/page errors, analytics, document upload, third-party script, or CDN font request occurred.
-- Desktop/mobile keyboard, focus, reduced motion, reflow, route semantics, and axe serious/critical checks passed.
-- Live service-worker control, offline reload/generation, cache versioning, and local update notification passed.
-- Billing verification allows 30 requests per client window; request 31 returned 429 with `Retry-After: 4`.
-- Mobile Lighthouse: 99 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.17 s, CLS 0, TBT 116 ms.
-
-Full evidence and exact commands are recorded in [verification-10.md](verification-10.md).
+- Fresh Chromium contexts at 390 × 844 and 1440 × 900 confirmed the cold first screen and one-click prepared demo.
+- All 32 literal commands in `.factory/claims.json` passed independently from a no-hard-link clean clone after `npm ci`.
+- `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` passed in the clean clone.
+- The local suite passed 11 unit and 46 Chromium tests.
+- The live suite passed 11 unit and 45 Chromium tests; the one skipped case is the local-only changed-worker simulation, which passed locally.
+- The URL verifier passed root, query Demo, Privacy, and Terms with one h1, `lang=en`, a main landmark, image alt coverage, labeled controls, and no console errors.
+- Live demo isolation, Reset, request origins, offline reload/generation, route focus, Back restoration, and link destinations passed.
+- Live and clean-build HTML, JavaScript, CSS, lazy PDF chunk, and service worker matched byte-for-byte.
 
 ## Run again
 
@@ -31,9 +25,9 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
-PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npx playwright test --workers=2
+PLAYWRIGHT_BASE_URL=https://end-client-reference.sociobot.in npm test
 ```
 
 ## Known gaps and next steps
 
-No known release gap remains. No real payment was made; checkout verification stopped before purchase. Deployment, DNS, billing configuration, and unrelated resources were not modified.
+No corrective gap was found. No payment was made; hosted checkout verification stopped before purchase. No deployment, infrastructure, DNS, database, app setting, secret, or unrelated resource was read or modified.
